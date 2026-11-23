@@ -3780,4 +3780,57 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get vpnServiceStartFailed => 'VPN サービスを起動できませんでした。';
+
+  @override
+  String get managedIspSetup => 'VPNと固定ISPを設定';
+
+  @override
+  String get managedIspPure => 'VPNのみ';
+
+  @override
+  String get managedIspMode => '01 VPN → ISP';
+
+  @override
+  String get managedIspExpected => '想定出口IP';
+
+  @override
+  String get managedIspInvalid => 'HTTPS購読、SOCKS5サーバーと認証情報を確認してください。';
+
+  @override
+  String get managedIspSaveFailed => '設定を作成できません。購読を確認してください。';
+
+  @override
+  String get managedIspUnavailable => '署名済みmacOSネットワークフィルタがありません。';
+
+  @override
+  String get managedIspBlocked => '固定ISPに接続できません。フィルタの許可とVPNを確認してください。';
+
+  @override
+  String get managedIspExitViaPure => '対応するVPN設定に切り替えてください。';
+
+  @override
+  String get managedIspRemovePairFirst => '先に固定ISP設定を削除してください。';
+
+  @override
+  String get managedIspCheck => '固定出口を確認';
+
+  @override
+  String get managedIspWaiting => '固定出口を待機中';
+
+  @override
+  String get managedIspEnvironment => 'macOSとChromeを確認';
+
+  @override
+  String get managedIspChromeManaged =>
+      'ChromeのWebRTCポリシーは管理されています。chrome://policyで確認してください。';
+
+  @override
+  String get managedIspChromeMissing =>
+      'macOS設定でWebRTCポリシーをインストールし、chrome://policyで確認してください。';
+
+  @override
+  String get managedIspChromeAbsent => 'Chromeがありません。';
+
+  @override
+  String get managedIspChromeInstall => 'Chromeポリシーを開く';
 }

@@ -1138,5 +1138,22 @@
   "coreRunningDesc": "アプリはコアに接続されています",
   "forceRestartCore": "強制再起動",
   "vpnPermissionNotGranted": "VPN の権限が許可されなかったため、VPN は起動しませんでした。ほかのアプリが常時接続 VPN に設定されている場合も起動できません。",
-  "vpnServiceStartFailed": "VPN サービスを起動できませんでした。"
+  "vpnServiceStartFailed": "VPN サービスを起動できませんでした。",
+  "managedIspSetup": "VPNと固定ISPを設定",
+  "managedIspPure": "VPNのみ",
+  "managedIspMode": "01 VPN → ISP",
+  "managedIspExpected": "想定出口IP",
+  "managedIspInvalid": "HTTPS購読、SOCKS5サーバーと認証情報を確認してください。",
+  "managedIspSaveFailed": "設定を作成できません。購読を確認してください。",
+  "managedIspUnavailable": "署名済みmacOSネットワークフィルタがありません。",
+  "managedIspBlocked": "固定ISPに接続できません。フィルタの許可とVPNを確認してください。",
+  "managedIspExitViaPure": "対応するVPN設定に切り替えてください。",
+  "managedIspRemovePairFirst": "先に固定ISP設定を削除してください。",
+  "managedIspCheck": "固定出口を確認",
+  "managedIspWaiting": "固定出口を待機中",
+  "managedIspEnvironment": "macOSとChromeを確認",
+  "managedIspChromeManaged": "ChromeのWebRTCポリシーは管理されています。chrome://policyで確認してください。",
+  "managedIspChromeMissing": "macOS設定でWebRTCポリシーをインストールし、chrome://policyで確認してください。",
+  "managedIspChromeAbsent": "Chromeがありません。",
+  "managedIspChromeInstall": "Chromeポリシーを開く"
 }

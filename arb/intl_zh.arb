@@ -1138,5 +1138,22 @@
   "coreRunningDesc": "应用已连接到核心",
   "forceRestartCore": "强制重启",
   "vpnPermissionNotGranted": "未获得 VPN 权限，VPN 没有启动。其他应用设为始终开启的 VPN 时也会如此。",
-  "vpnServiceStartFailed": "VPN 服务无法启动。"
+  "vpnServiceStartFailed": "VPN 服务无法启动。",
+  "managedIspSetup": "配置 VPN 和固定 ISP",
+  "managedIspPure": "纯 VPN",
+  "managedIspMode": "01 VPN → ISP",
+  "managedIspExpected": "预期出口 IP",
+  "managedIspInvalid": "请检查 HTTPS 订阅、SOCKS5 服务器和鉴权信息。",
+  "managedIspSaveFailed": "无法创建配置。请检查订阅后重试。",
+  "managedIspUnavailable": "此构建未包含已签名的 macOS 网络过滤器。",
+  "managedIspBlocked": "固定 ISP 连接不可用。请检查 macOS 网络过滤授权和 VPN 连接。",
+  "managedIspExitViaPure": "请选择关联的纯 VPN 配置，退出固定 ISP 模式。",
+  "managedIspRemovePairFirst": "请先移除关联的固定 ISP 配置。",
+  "managedIspCheck": "检查固定出口",
+  "managedIspWaiting": "等待固定出口",
+  "managedIspEnvironment": "检查 macOS 和 Chrome",
+  "managedIspChromeManaged": "已读取到 Chrome WebRTC 受管策略。请在实际使用的 Chrome profile 中打开 chrome://policy 核对。",
+  "managedIspChromeMissing": "请在 macOS 设置里确认安装 WebRTC 策略，再打开 chrome://policy 核对。",
+  "managedIspChromeAbsent": "未安装 Chrome。",
+  "managedIspChromeInstall": "打开 Chrome 策略安装"
 }

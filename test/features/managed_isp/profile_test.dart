@@ -128,4 +128,82 @@ void main() {
       expect(_profile(ispHost: '2001:db8::10').ispPort, 1080);
     },
   );
+
+  test('builds DNS and VPN policy from one pinned snapshot', () {
+    final profile = _profile();
+    final raw = {
+      'proxies': [
+        {..._node('AnyTLS', 'one.example.test'), 'type': 'anytls'},
+        {..._node('HY2', 'two.example.test'), 'type': 'hysteria2'},
+        _node('Unresolved', 'three.example.test'),
+        {
+          ..._node('Hopping', 'four.example.test'),
+          'type': 'hysteria2',
+          'ports': '8888-9999',
+        },
+      ],
+    };
+    final plan = profile.protectedConfig(
+      raw,
+      {
+        'one.example.test': ['192.0.2.1', '198.18.0.2'],
+        'two.example.test': ['198.51.100.2'],
+        'four.example.test': ['203.0.113.3'],
+        'isp.example.test': ['203.0.113.5'],
+      },
+      tun: 'utun223',
+      mixedPort: 7890,
+      enableTun: true,
+    );
+    expect(plan.endpoints, ['tcp/192.0.2.1/1081', 'udp/198.51.100.2/1081']);
+    expect(plan.config['hosts'], {
+      'isp.example.test': ['203.0.113.5'],
+      'one.example.test': ['192.0.2.1'],
+      'two.example.test': ['198.51.100.2'],
+    });
+    final dns = plan.config['dns'] as Map;
+    expect(dns['nameserver'], ['https://1.1.1.1/dns-query#Managed ISP']);
+    expect(dns['use-system-hosts'], isFalse);
+    expect(plan.config['rules'], ['MATCH,Managed ISP']);
+    expect(plan.config['allow-lan'], isFalse);
+    expect(plan.config['bind-address'], '127.0.0.1');
+    final tun = plan.config['tun'] as Map;
+    expect(tun['enable'], isTrue);
+    expect(tun['device'], 'utun223');
+    expect(tun['strict-route'], isTrue);
+  });
+
+  test(
+    'protected refresh uses an injected resolver and retains old pins on failure',
+    () async {
+      final profile = _profile();
+      final result = await profile.resolve(
+        {
+          'proxies': [
+            _node('Old', 'old.example.test'),
+            _node('New', 'new.example.test'),
+          ],
+        },
+        previous: {
+          'old.example.test': ['192.0.2.8'],
+        },
+        resolver: (host) async => switch (host) {
+          'old.example.test' => throw const FormatException(),
+          'new.example.test' => ['2001:db8::1', '198.51.100.3', '198.18.0.2'],
+          'isp.example.test' => ['203.0.113.7'],
+          _ => [],
+        },
+      );
+      expect(result, {
+        'old.example.test': ['192.0.2.8'],
+        'new.example.test': ['198.51.100.3'],
+        'isp.example.test': ['203.0.113.7'],
+      });
+    },
+  );
+
+  test('traces the managed profile to the ID of the pure VPN entry', () {
+    expect(managedIspSourceId(managedIspUrl(10)), 10);
+    expect(managedIspSourceId('https://example.test/subscription'), isNull);
+  });
 }

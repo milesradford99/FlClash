@@ -24,6 +24,8 @@
   </picture>
 </p>
 
+> 此 fork 的 macOS 固定 ISP 版本提供关联 profile、订阅刷新和系统网络过滤。独立测试机的签名构建及验收见 [FlClash ISP 构建与验收](macos/NetworkProtection/README.md)。
+
 ## 功能
 
 - **一个应用覆盖 Android、Windows、macOS 和 Linux**，桌面端同时提供 x64 与 ARM64 版本。

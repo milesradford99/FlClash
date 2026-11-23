@@ -3855,4 +3855,57 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get vpnServiceStartFailed => 'VPN 서비스를 시작하지 못했습니다.';
+
+  @override
+  String get managedIspSetup => 'VPN 및 고정 ISP 설정';
+
+  @override
+  String get managedIspPure => 'VPN 전용';
+
+  @override
+  String get managedIspMode => '01 VPN → ISP';
+
+  @override
+  String get managedIspExpected => '예상 출구 IP';
+
+  @override
+  String get managedIspInvalid => 'HTTPS 구독 주소와 SOCKS5 서버 및 인증 정보를 확인하세요.';
+
+  @override
+  String get managedIspSaveFailed => '프로필을 만들 수 없습니다. 구독을 확인하세요.';
+
+  @override
+  String get managedIspUnavailable => '서명된 macOS 네트워크 필터가 없습니다.';
+
+  @override
+  String get managedIspBlocked => '고정 ISP 연결을 사용할 수 없습니다. 필터 승인과 VPN을 확인하세요.';
+
+  @override
+  String get managedIspExitViaPure => '연결된 VPN 프로필로 전환하세요.';
+
+  @override
+  String get managedIspRemovePairFirst => '고정 ISP 프로필을 먼저 삭제하세요.';
+
+  @override
+  String get managedIspCheck => '고정 출구 확인';
+
+  @override
+  String get managedIspWaiting => '고정 출구 대기 중';
+
+  @override
+  String get managedIspEnvironment => 'macOS 및 Chrome 확인';
+
+  @override
+  String get managedIspChromeManaged =>
+      'Chrome WebRTC 정책이 관리됩니다. chrome://policy에서 확인하세요.';
+
+  @override
+  String get managedIspChromeMissing =>
+      'macOS 설정에서 WebRTC 정책을 설치한 후 chrome://policy를 확인하세요.';
+
+  @override
+  String get managedIspChromeAbsent => 'Chrome이 설치되지 않았습니다.';
+
+  @override
+  String get managedIspChromeInstall => 'Chrome 정책 설치 열기';
 }

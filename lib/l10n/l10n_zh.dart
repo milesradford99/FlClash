@@ -3731,4 +3731,57 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get vpnServiceStartFailed => 'VPN 服务无法启动。';
+
+  @override
+  String get managedIspSetup => '配置 VPN 和固定 ISP';
+
+  @override
+  String get managedIspPure => '纯 VPN';
+
+  @override
+  String get managedIspMode => '01 VPN → ISP';
+
+  @override
+  String get managedIspExpected => '预期出口 IP';
+
+  @override
+  String get managedIspInvalid => '请检查 HTTPS 订阅、SOCKS5 服务器和鉴权信息。';
+
+  @override
+  String get managedIspSaveFailed => '无法创建配置。请检查订阅后重试。';
+
+  @override
+  String get managedIspUnavailable => '此构建未包含已签名的 macOS 网络过滤器。';
+
+  @override
+  String get managedIspBlocked => '固定 ISP 连接不可用。请检查 macOS 网络过滤授权和 VPN 连接。';
+
+  @override
+  String get managedIspExitViaPure => '请选择关联的纯 VPN 配置，退出固定 ISP 模式。';
+
+  @override
+  String get managedIspRemovePairFirst => '请先移除关联的固定 ISP 配置。';
+
+  @override
+  String get managedIspCheck => '检查固定出口';
+
+  @override
+  String get managedIspWaiting => '等待固定出口';
+
+  @override
+  String get managedIspEnvironment => '检查 macOS 和 Chrome';
+
+  @override
+  String get managedIspChromeManaged =>
+      '已读取到 Chrome WebRTC 受管策略。请在实际使用的 Chrome profile 中打开 chrome://policy 核对。';
+
+  @override
+  String get managedIspChromeMissing =>
+      '请在 macOS 设置里确认安装 WebRTC 策略，再打开 chrome://policy 核对。';
+
+  @override
+  String get managedIspChromeAbsent => '未安装 Chrome。';
+
+  @override
+  String get managedIspChromeInstall => '打开 Chrome 策略安装';
 }

@@ -6947,6 +6947,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The VPN service could not start.'**
   String get vpnServiceStartFailed;
+
+  /// No description provided for @managedIspSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up VPN and fixed ISP'**
+  String get managedIspSetup;
+
+  /// No description provided for @managedIspPure.
+  ///
+  /// In en, this message translates to:
+  /// **'VPN only'**
+  String get managedIspPure;
+
+  /// No description provided for @managedIspMode.
+  ///
+  /// In en, this message translates to:
+  /// **'01 VPN → ISP'**
+  String get managedIspMode;
+
+  /// No description provided for @managedIspExpected.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected exit IP'**
+  String get managedIspExpected;
+
+  /// No description provided for @managedIspInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid HTTPS subscription, SOCKS5 server and credentials.'**
+  String get managedIspInvalid;
+
+  /// No description provided for @managedIspSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the profiles. Check the subscription and try again.'**
+  String get managedIspSaveFailed;
+
+  /// No description provided for @managedIspUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This build does not include the signed macOS network filter.'**
+  String get managedIspUnavailable;
+
+  /// No description provided for @managedIspBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed ISP connection unavailable. Check macOS network filter approval and the VPN connection.'**
+  String get managedIspBlocked;
+
+  /// No description provided for @managedIspExitViaPure.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the paired VPN profile to leave fixed ISP mode.'**
+  String get managedIspExitViaPure;
+
+  /// No description provided for @managedIspRemovePairFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove its fixed ISP profile first.'**
+  String get managedIspRemovePairFirst;
+
+  /// No description provided for @managedIspCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check fixed exit'**
+  String get managedIspCheck;
+
+  /// No description provided for @managedIspWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for fixed exit'**
+  String get managedIspWaiting;
+
+  /// No description provided for @managedIspEnvironment.
+  ///
+  /// In en, this message translates to:
+  /// **'macOS and Chrome'**
+  String get managedIspEnvironment;
+
+  /// No description provided for @managedIspChromeManaged.
+  ///
+  /// In en, this message translates to:
+  /// **'Chrome WebRTC policy is managed. Check the active profile in chrome://policy.'**
+  String get managedIspChromeManaged;
+
+  /// No description provided for @managedIspChromeMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Install the WebRTC policy in macOS Settings, then check chrome://policy.'**
+  String get managedIspChromeMissing;
+
+  /// No description provided for @managedIspChromeAbsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Chrome is not installed.'**
+  String get managedIspChromeAbsent;
+
+  /// No description provided for @managedIspChromeInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Chrome policy installer'**
+  String get managedIspChromeInstall;
 }
 
 class _AppLocalizationsDelegate

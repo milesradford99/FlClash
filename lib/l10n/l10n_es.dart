@@ -4002,4 +4002,63 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get vpnServiceStartFailed => 'No se pudo iniciar el servicio VPN.';
+
+  @override
+  String get managedIspSetup => 'Configurar VPN e ISP fijo';
+
+  @override
+  String get managedIspPure => 'Solo VPN';
+
+  @override
+  String get managedIspMode => '01 VPN → ISP';
+
+  @override
+  String get managedIspExpected => 'IP de salida esperada';
+
+  @override
+  String get managedIspInvalid =>
+      'Comprueba la suscripción HTTPS, el servidor SOCKS5 y las credenciales.';
+
+  @override
+  String get managedIspSaveFailed =>
+      'No se pudieron crear los perfiles. Comprueba la suscripción.';
+
+  @override
+  String get managedIspUnavailable =>
+      'Esta versión no incluye el filtro de red firmado de macOS.';
+
+  @override
+  String get managedIspBlocked =>
+      'Salida fija no disponible. Comprueba el permiso del filtro y la VPN.';
+
+  @override
+  String get managedIspExitViaPure =>
+      'Selecciona el perfil VPN asociado para salir de este modo.';
+
+  @override
+  String get managedIspRemovePairFirst =>
+      'Elimina primero el perfil de ISP fijo.';
+
+  @override
+  String get managedIspCheck => 'Comprobar salida fija';
+
+  @override
+  String get managedIspWaiting => 'Esperando la salida fija';
+
+  @override
+  String get managedIspEnvironment => 'Comprobar macOS y Chrome';
+
+  @override
+  String get managedIspChromeManaged =>
+      'La política WebRTC de Chrome está gestionada. Comprueba chrome://policy.';
+
+  @override
+  String get managedIspChromeMissing =>
+      'Instala la política WebRTC en Ajustes de macOS y comprueba chrome://policy.';
+
+  @override
+  String get managedIspChromeAbsent => 'Chrome no está instalado.';
+
+  @override
+  String get managedIspChromeInstall => 'Abrir instalador de Chrome';
 }

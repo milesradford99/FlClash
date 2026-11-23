@@ -3954,4 +3954,63 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get vpnServiceStartFailed => 'Не удалось запустить службу VPN.';
+
+  @override
+  String get managedIspSetup => 'Настроить VPN и постоянный выход';
+
+  @override
+  String get managedIspPure => 'Только VPN';
+
+  @override
+  String get managedIspMode => '01 VPN → ISP';
+
+  @override
+  String get managedIspExpected => 'Ожидаемый IP выхода';
+
+  @override
+  String get managedIspInvalid =>
+      'Проверьте HTTPS-подписку, сервер SOCKS5 и данные входа.';
+
+  @override
+  String get managedIspSaveFailed =>
+      'Не удалось создать профили. Проверьте подписку.';
+
+  @override
+  String get managedIspUnavailable =>
+      'Подписанный сетевой фильтр macOS отсутствует.';
+
+  @override
+  String get managedIspBlocked =>
+      'Постоянный выход недоступен. Проверьте разрешение фильтра и VPN.';
+
+  @override
+  String get managedIspExitViaPure =>
+      'Выберите связанный профиль VPN для выхода из режима.';
+
+  @override
+  String get managedIspRemovePairFirst =>
+      'Сначала удалите профиль постоянного выхода.';
+
+  @override
+  String get managedIspCheck => 'Проверить постоянный выход';
+
+  @override
+  String get managedIspWaiting => 'Ожидание постоянного выхода';
+
+  @override
+  String get managedIspEnvironment => 'Проверить macOS и Chrome';
+
+  @override
+  String get managedIspChromeManaged =>
+      'Политика WebRTC управляется. Проверьте chrome://policy.';
+
+  @override
+  String get managedIspChromeMissing =>
+      'Установите политику WebRTC в настройках macOS и проверьте chrome://policy.';
+
+  @override
+  String get managedIspChromeAbsent => 'Chrome не установлен.';
+
+  @override
+  String get managedIspChromeInstall => 'Открыть установку политики Chrome';
 }

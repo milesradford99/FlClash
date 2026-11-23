@@ -1138,5 +1138,22 @@
   "coreRunningDesc": "Приложение подключено к ядру",
   "forceRestartCore": "Принудительный перезапуск",
   "vpnPermissionNotGranted": "Разрешение на VPN не выдано, поэтому VPN не запущен. Постоянная VPN, заданная для другого приложения, тоже мешает запуску.",
-  "vpnServiceStartFailed": "Не удалось запустить службу VPN."
+  "vpnServiceStartFailed": "Не удалось запустить службу VPN.",
+  "managedIspSetup": "Настроить VPN и постоянный выход",
+  "managedIspPure": "Только VPN",
+  "managedIspMode": "01 VPN → ISP",
+  "managedIspExpected": "Ожидаемый IP выхода",
+  "managedIspInvalid": "Проверьте HTTPS-подписку, сервер SOCKS5 и данные входа.",
+  "managedIspSaveFailed": "Не удалось создать профили. Проверьте подписку.",
+  "managedIspUnavailable": "Подписанный сетевой фильтр macOS отсутствует.",
+  "managedIspBlocked": "Постоянный выход недоступен. Проверьте разрешение фильтра и VPN.",
+  "managedIspExitViaPure": "Выберите связанный профиль VPN для выхода из режима.",
+  "managedIspRemovePairFirst": "Сначала удалите профиль постоянного выхода.",
+  "managedIspCheck": "Проверить постоянный выход",
+  "managedIspWaiting": "Ожидание постоянного выхода",
+  "managedIspEnvironment": "Проверить macOS и Chrome",
+  "managedIspChromeManaged": "Политика WebRTC управляется. Проверьте chrome://policy.",
+  "managedIspChromeMissing": "Установите политику WebRTC в настройках macOS и проверьте chrome://policy.",
+  "managedIspChromeAbsent": "Chrome не установлен.",
+  "managedIspChromeInstall": "Открыть установку политики Chrome"
 }

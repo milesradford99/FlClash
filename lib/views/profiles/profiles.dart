@@ -3,6 +3,8 @@ import 'dart:math' as math;
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/managed_isp/platform.dart';
+import 'package:fl_clash/features/managed_isp/profile.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -281,7 +283,10 @@ class _ProfilesGridState extends ConsumerState<_ProfilesGrid> {
               profile: profile,
               groupValue: widget.currentProfileId,
               onChanged: (profileId) {
-                ref.read(currentProfileIdProvider.notifier).value = profileId;
+                final action = ref.read(profilesActionProvider.notifier);
+                unawaited(
+                  globalState.safeRun(() => action.selectProfile(profileId)),
+                );
               },
             );
           },
@@ -332,7 +337,7 @@ class ProfileItem extends ConsumerWidget {
     if (res != true) {
       return;
     }
-    await profilesAction.deleteProfile(profile.id);
+    await globalState.safeRun(() => profilesAction.deleteProfile(profile.id));
   }
 
   Future<void> _handlePreview(BuildContext context) async {
@@ -372,6 +377,23 @@ class ProfileItem extends ConsumerWidget {
       ProfileType.file => appLocalizations.local,
       ProfileType.custom => appLocalizations.custom,
     };
+  }
+
+  Widget _buildManagedSubtitle(BuildContext context, bool isSelected) {
+    final labels = context.appLocalizations;
+    return ValueListenableBuilder(
+      valueListenable: managedIspExit,
+      builder: (context, output, child) {
+        final ip = output?.profileId == profile.id ? output?.ip : null;
+        return _ProfileCardTitle(
+          profile: profile,
+          expire: null,
+          subtitle: isSelected
+              ? ip ?? labels.managedIspWaiting
+              : labels.managedIspCheck,
+        );
+      },
+    );
   }
 
   Widget _buildTrailing(BuildContext context, {required bool isUpdating}) {
@@ -437,10 +459,72 @@ class ProfileItem extends ConsumerWidget {
     }
   }
 
+  Future<void> _checkManagedEnvironment(BuildContext context) async {
+    const native = ManagedIspPlatform();
+    final result = await globalState.safeRun(native.environment);
+    if (!context.mounted || result == null) return;
+    final labels = context.appLocalizations;
+    final installed = result['chromeInstalled'] == true;
+    final managed = result['webRtcManaged'] == true;
+    final chrome = installed
+        ? managed
+              ? labels.managedIspChromeManaged
+              : labels.managedIspChromeMissing
+        : labels.managedIspChromeAbsent;
+    final confirmed = await dialogs.showMessage(
+      title: labels.managedIspEnvironment,
+      message: TextSpan(
+        text: '${result['locale']} · ${result['timeZone']}\n\n$chrome',
+      ),
+      confirmText: installed && !managed
+          ? labels.managedIspChromeInstall
+          : null,
+    );
+    if (confirmed == true && installed && !managed) {
+      await globalState.safeRun(native.openChromeProfile);
+    }
+  }
+
   List<PopupMenuItem> _menuItems(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     final isUrl = profile.type == ProfileType.url;
     final isCustom = profile.type == ProfileType.custom;
+    if (managedIspSourceId(profile.url) != null) {
+      final action = ref.read(profilesActionProvider.notifier);
+      return [
+        PopupMenuItem(
+          glyph: AppGlyphs.sync,
+          label: appLocalizations.sync,
+          onPressed: () =>
+              globalState.safeRun(() => action.refreshManagedIsp(profile)),
+        ),
+        PopupMenuItem(
+          glyph: AppGlyphs.eye,
+          label: appLocalizations.managedIspCheck,
+          onPressed: () async {
+            final ip = await globalState.safeRun(
+              () => action.verifyManagedIsp(profile),
+            );
+            if (ip != null) {
+              managedIspExit.value = (profileId: profile.id, ip: ip);
+              dialogs.showBanner(ip, level: BannerLevel.success);
+            }
+          },
+        ),
+        if (system.isMacOS && !ref.read(safeModeProvider))
+          PopupMenuItem(
+            glyph: AppGlyphs.devices,
+            label: appLocalizations.managedIspEnvironment,
+            onPressed: () => _checkManagedEnvironment(context),
+          ),
+        PopupMenuItem(
+          danger: true,
+          glyph: AppGlyphs.delete,
+          label: appLocalizations.delete,
+          onPressed: () => _handleDeleteProfile(context, ref),
+        ),
+      ];
+    }
     return [
       PopupMenuItem(
         glyph: AppGlyphs.edit,
@@ -559,11 +643,13 @@ class ProfileItem extends ConsumerWidget {
               if (isSelected) const SelectionBadge(size: 24),
             ],
           ),
-          title: _ProfileCardTitle(
-            profile: profile,
-            expire: subscriptionInfo?.expireDate,
-            subtitle: _subtitle(context),
-          ),
+          title: managedIspSourceId(profile.url) != null
+              ? _buildManagedSubtitle(context, isSelected)
+              : _ProfileCardTitle(
+                  profile: profile,
+                  expire: subscriptionInfo?.expireDate,
+                  subtitle: _subtitle(context),
+                ),
         ),
       ),
     );

@@ -1253,5 +1253,22 @@
   "coreRunningDesc": "The app is connected to the core",
   "forceRestartCore": "Force restart",
   "vpnPermissionNotGranted": "VPN permission was not granted, so the VPN did not start. An always-on VPN set for another app also blocks it.",
-  "vpnServiceStartFailed": "The VPN service could not start."
+  "vpnServiceStartFailed": "The VPN service could not start.",
+  "managedIspSetup": "Set up VPN and fixed ISP",
+  "managedIspPure": "VPN only",
+  "managedIspMode": "01 VPN → ISP",
+  "managedIspExpected": "Expected exit IP",
+  "managedIspInvalid": "Enter a valid HTTPS subscription, SOCKS5 server and credentials.",
+  "managedIspSaveFailed": "Could not create the profiles. Check the subscription and try again.",
+  "managedIspUnavailable": "This build does not include the signed macOS network filter.",
+  "managedIspBlocked": "Fixed ISP connection unavailable. Check macOS network filter approval and the VPN connection.",
+  "managedIspExitViaPure": "Select the paired VPN profile to leave fixed ISP mode.",
+  "managedIspRemovePairFirst": "Remove its fixed ISP profile first.",
+  "managedIspCheck": "Check fixed exit",
+  "managedIspWaiting": "Waiting for fixed exit",
+  "managedIspEnvironment": "macOS and Chrome",
+  "managedIspChromeManaged": "Chrome WebRTC policy is managed. Check the active profile in chrome://policy.",
+  "managedIspChromeMissing": "Install the WebRTC policy in macOS Settings, then check chrome://policy.",
+  "managedIspChromeAbsent": "Chrome is not installed.",
+  "managedIspChromeInstall": "Open Chrome policy installer"
 }

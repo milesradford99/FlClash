@@ -1138,5 +1138,22 @@
   "coreRunningDesc": "앱이 코어에 연결되어 있습니다",
   "forceRestartCore": "강제 다시 시작",
   "vpnPermissionNotGranted": "VPN 권한이 허용되지 않아 VPN을 시작하지 않았습니다. 다른 앱이 상시 사용 VPN으로 설정되어 있어도 시작할 수 없습니다.",
-  "vpnServiceStartFailed": "VPN 서비스를 시작하지 못했습니다."
+  "vpnServiceStartFailed": "VPN 서비스를 시작하지 못했습니다.",
+  "managedIspSetup": "VPN 및 고정 ISP 설정",
+  "managedIspPure": "VPN 전용",
+  "managedIspMode": "01 VPN → ISP",
+  "managedIspExpected": "예상 출구 IP",
+  "managedIspInvalid": "HTTPS 구독 주소와 SOCKS5 서버 및 인증 정보를 확인하세요.",
+  "managedIspSaveFailed": "프로필을 만들 수 없습니다. 구독을 확인하세요.",
+  "managedIspUnavailable": "서명된 macOS 네트워크 필터가 없습니다.",
+  "managedIspBlocked": "고정 ISP 연결을 사용할 수 없습니다. 필터 승인과 VPN을 확인하세요.",
+  "managedIspExitViaPure": "연결된 VPN 프로필로 전환하세요.",
+  "managedIspRemovePairFirst": "고정 ISP 프로필을 먼저 삭제하세요.",
+  "managedIspCheck": "고정 출구 확인",
+  "managedIspWaiting": "고정 출구 대기 중",
+  "managedIspEnvironment": "macOS 및 Chrome 확인",
+  "managedIspChromeManaged": "Chrome WebRTC 정책이 관리됩니다. chrome://policy에서 확인하세요.",
+  "managedIspChromeMissing": "macOS 설정에서 WebRTC 정책을 설치한 후 chrome://policy를 확인하세요.",
+  "managedIspChromeAbsent": "Chrome이 설치되지 않았습니다.",
+  "managedIspChromeInstall": "Chrome 정책 설치 열기"
 }

@@ -1138,5 +1138,22 @@
   "coreRunningDesc": "L’application est connectée au cœur",
   "forceRestartCore": "Forcer le redémarrage",
   "vpnPermissionNotGranted": "L'autorisation VPN n'a pas été accordée, le VPN n'a donc pas démarré. Un VPN permanent défini pour une autre application l'empêche aussi.",
-  "vpnServiceStartFailed": "Le service VPN n'a pas pu démarrer."
+  "vpnServiceStartFailed": "Le service VPN n'a pas pu démarrer.",
+  "managedIspSetup": "Configurer le VPN et la sortie fixe",
+  "managedIspPure": "VPN seul",
+  "managedIspMode": "01 VPN → ISP",
+  "managedIspExpected": "IP de sortie attendue",
+  "managedIspInvalid": "Vérifiez le lien HTTPS, le serveur SOCKS5 et les identifiants.",
+  "managedIspSaveFailed": "Création impossible. Vérifiez l’abonnement.",
+  "managedIspUnavailable": "Le filtre réseau macOS signé est absent.",
+  "managedIspBlocked": "Sortie fixe indisponible. Vérifiez l’autorisation du filtre et le VPN.",
+  "managedIspExitViaPure": "Sélectionnez le profil VPN associé pour quitter ce mode.",
+  "managedIspRemovePairFirst": "Supprimez d’abord le profil de sortie fixe.",
+  "managedIspCheck": "Vérifier la sortie fixe",
+  "managedIspWaiting": "En attente de la sortie fixe",
+  "managedIspEnvironment": "Vérifier macOS et Chrome",
+  "managedIspChromeManaged": "La règle WebRTC de Chrome est gérée. Vérifiez chrome://policy.",
+  "managedIspChromeMissing": "Installez la règle WebRTC dans les réglages macOS puis vérifiez chrome://policy.",
+  "managedIspChromeAbsent": "Chrome est absent.",
+  "managedIspChromeInstall": "Ouvrir l’installation de la règle Chrome"
 }
