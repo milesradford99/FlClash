@@ -1936,6 +1936,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось получить права для TUN, поэтому он выключен.';
 
   @override
+  String get tunCorePermissionFailed =>
+      'macOS не удалось настроить права Core. Если FlClash ISP открыт из папки «Документы» или «Загрузки», перенесите приложение в папку «Программы» и повторите попытку.';
+
+  @override
+  String get tunStartFailed =>
+      'Core не удалось запустить TUN. Отключите TUN в других VPN-приложениях и повторите попытку. Если проблема сохранится, проверьте журналы.';
+
+  @override
   String get sudoPasswordTitle => 'Введите пароль для sudo';
 
   @override
@@ -3954,4 +3962,249 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get vpnServiceStartFailed => 'Не удалось запустить службу VPN.';
+
+  @override
+  String get managedIspSetup => 'Настроить VPN и постоянный выход';
+
+  @override
+  String get managedIspPure => 'Только VPN';
+
+  @override
+  String get managedIspMode => '01 VPN → ISP';
+
+  @override
+  String get managedIspExpected => 'Ожидаемый IP выхода';
+
+  @override
+  String get managedIspConnection => 'URL подключения SOCKS5';
+
+  @override
+  String get managedIspLocalMode => 'TUN и фиксированный ISP для Chrome';
+
+  @override
+  String get managedIspSharedNode => 'Общий узел VPN';
+
+  @override
+  String get managedIspLocalFailed =>
+      'Не удалось запустить локальный прокси ISP. Проверьте подключение VPN и доступность порта 17890.';
+
+  @override
+  String get managedIspInvalid =>
+      'Введите HTTPS-ссылку подписки и действительный URL подключения SOCKS5.';
+
+  @override
+  String get managedIspSaveFailed =>
+      'Не удалось создать профили. Проверьте подписку.';
+
+  @override
+  String get managedIspUnavailable =>
+      'Подписанный сетевой фильтр macOS отсутствует.';
+
+  @override
+  String get managedIspBlocked =>
+      'Постоянный выход недоступен. Проверьте разрешение фильтра и VPN.';
+
+  @override
+  String get managedIspExitViaPure =>
+      'Выберите связанный профиль VPN для выхода из режима.';
+
+  @override
+  String get managedIspRemovePairFirst =>
+      'Сначала удалите профиль постоянного выхода.';
+
+  @override
+  String get managedIspCheck => 'Проверить постоянный выход';
+
+  @override
+  String get managedIspWaiting => 'Ожидание постоянного выхода';
+
+  @override
+  String get ispDiagOpenIspChrome => 'Открыть Chrome через фиксированный ISP';
+
+  @override
+  String get ispDiagNewChromeSpace => 'Создать пространство';
+
+  @override
+  String get ispAppsTitle => 'Выбранные приложения';
+
+  @override
+  String get ispMonitorSettings => 'Настройки проверки подключения';
+
+  @override
+  String get ispMonitorPeriodic => 'Периодически проверять текущее подключение';
+
+  @override
+  String get ispMonitorInterval => 'Интервал проверки (секунды)';
+
+  @override
+  String get ispMonitorHint =>
+      'Периодическая проверка выполняется при наличии трафика ISP. При сбое проверяются резервные узлы.';
+
+  @override
+  String get ispMonitorChecking => 'Проверка подключения ISP';
+
+  @override
+  String get ispMonitorDown =>
+      'Фиксированный ISP недоступен. Ожидание повторной попытки.';
+
+  @override
+  String get ispMonitorInvalidInterval =>
+      'Введите интервал от 1 до 86400 секунд.';
+
+  @override
+  String get ispAppsAdd => 'Добавить приложение';
+
+  @override
+  String get ispAppsStart => 'Подключить фиксированный ISP';
+
+  @override
+  String get ispAppsWaiting => 'Ожидание подключения';
+
+  @override
+  String get ispAppsMatched => 'Используется фиксированный ISP';
+
+  @override
+  String get ispAppsNeedsTun => 'Ожидание TUN';
+
+  @override
+  String get ispAppsHint =>
+      'Правила действуют для новых соединений. Добавляйте внешние программы отдельно.';
+
+  @override
+  String get ispAppsFailed =>
+      'Не удалось обновить список. Выберите приложение или исполняемый файл либо повторите попытку.';
+
+  @override
+  String get ispDiagOpenChromeSpace => 'Открыть';
+
+  @override
+  String get ispDiagDuplicateChromeSpace =>
+      'Пространство с таким именем уже есть.';
+
+  @override
+  String get ispDiagChromeIsolation =>
+      'У каждого пространства свои вкладки, входы и файлы cookie. Все используют текущего фиксированного интернет-провайдера.';
+
+  @override
+  String get ispDiagChromeAvailable => 'Установлен';
+
+  @override
+  String get ispDiagChromeLaunchFailed =>
+      'Не удалось открыть Chrome. Проверьте, установлен ли Chrome, и повторите попытку.';
+
+  @override
+  String get ispDiagNoIspProfile =>
+      'Сначала сохраните профиль ISP. Если профилей несколько, откройте нужную карточку.';
+
+  @override
+  String get ispDiagWebRtcPending => 'Ожидает подтверждения в macOS';
+
+  @override
+  String get ispDiagWebRtcManagedNote =>
+      'Если Chrome управляется организацией, сначала проверьте действующие политики.';
+
+  @override
+  String get ispDiagWebRtcUnset => 'Системная политика не задана';
+
+  @override
+  String get ispDiagTimeZone => 'Часовой пояс';
+
+  @override
+  String get ispDiagAdvanced => 'Расширенная диагностика';
+
+  @override
+  String get ispDiagDetect => 'Проверить сейчас';
+
+  @override
+  String get ispDiagConfigure => 'Настроить…';
+
+  @override
+  String get ispDiagReview => 'Проверить изменения';
+
+  @override
+  String get ispDiagRepair =>
+      'Повторно применить профиль ISP. Соединения могут кратковременно прерваться.';
+
+  @override
+  String get ispDiagInstall =>
+      'Открыть установку политики WebRTC для всех профилей Chrome на этом Mac.';
+
+  @override
+  String get ispDiagConfirmProfile => 'Профиль проверен в chrome://version';
+
+  @override
+  String get ispDiagMissingProfile =>
+      'Выберите или создайте профиль и проверьте его каталог в chrome://version.';
+
+  @override
+  String get ispDiagPolicyConflict =>
+      'Действует другая управляемая политика WebRTC. Обратитесь к администратору.';
+
+  @override
+  String get ispDiagPolicyReview =>
+      'Обновите chrome://policy и проверьте значение, источник, область, уровень и состояние.';
+
+  @override
+  String get ispDiagBrowserProbe => 'Открыть тест Chrome';
+
+  @override
+  String get ispDiagProbeUrl => 'Разрешённый HTTPS-адрес';
+
+  @override
+  String get ispDiagProbeImport => 'Вставить результат браузера';
+
+  @override
+  String get ispDiagProbeApprove =>
+      'Запустить разрешённый тест? HTTPS использует текущий маршрут, а системная защита также проверяет системный DNS.';
+
+  @override
+  String get ispDiagProbeEvidence => 'Импортировать результат';
+
+  @override
+  String get ispDiagBrowserBehavior => 'Проверка поведения';
+
+  @override
+  String get ispDiagBrowserExternal =>
+      'Для проверки DNS и WebRTC нужны контрольный тест и внешние данные.';
+
+  @override
+  String get ispDiagResolver => 'Резолверы macOS';
+
+  @override
+  String get ispDiagCoreRoute => 'Маршруты и DNS ядра';
+
+  @override
+  String get ispDiagSystemProtection => 'TUN и системный фильтр';
+
+  @override
+  String get ispDiagPassed => 'Пройдено';
+
+  @override
+  String get ispDiagFailed => 'Ошибка';
+
+  @override
+  String get ispDiagUnverified => 'Не проверено';
+
+  @override
+  String get ispDiagAction => 'Требует действий';
+
+  @override
+  String get ispDiagNotApplicable => 'Неприменимо';
+
+  @override
+  String get managedIspEnvironment => 'Проверить macOS и Chrome';
+
+  @override
+  String get managedIspChromeManaged =>
+      'Политика WebRTC управляется. Проверьте chrome://policy.';
+
+  @override
+  String get managedIspChromeMissing =>
+      'Установите политику WebRTC в настройках macOS и проверьте chrome://policy.';
+
+  @override
+  String get managedIspChromeAbsent => 'Chrome не установлен.';
+
+  @override
+  String get managedIspChromeInstall => 'Открыть установку политики Chrome';
 }

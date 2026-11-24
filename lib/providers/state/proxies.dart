@@ -30,6 +30,14 @@ bool _hasSelection(Proxy proxy) => proxy.now?.isNotEmpty ?? false;
 ProxyState proxyState(Ref ref) {
   final suspend = ref.watch(suspendProvider);
   final isStart = ref.watch(runTimeProvider.select((state) => state != null));
+  final localIsp =
+      system.isMacOS &&
+      !managedIspSystemProtection &&
+      ref.watch(
+        currentProfileProvider.select(
+          (profile) => managedIspSourceId(profile?.url ?? '') != null,
+        ),
+      );
   final systemProxySelector = ref.watch(
     networkSettingProvider.select(
       (state) => SystemProxySelectorState(
@@ -45,7 +53,7 @@ ProxyState proxyState(Ref ref) {
   final moduleBypass = ref.watch(mitmModuleNetworkProvider).value?.bypassDomain;
   return ProxyState(
     isStart: suspend ? false : isStart,
-    systemProxy: systemProxySelector.systemProxy,
+    systemProxy: !localIsp && systemProxySelector.systemProxy,
     bassDomain:
         moduleBypass?.applyTo(systemProxySelector.bypassDomain) ??
         systemProxySelector.bypassDomain,

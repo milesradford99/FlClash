@@ -161,6 +161,7 @@ func applyConfig(params *SetupParams) error {
 	}
 
 	currentConfig = cfg
+	installISPMonitor(cfg)
 	hub.ApplyConfig(cfg)
 	patchSelectGroup(params.SelectedMap)
 	updateListeners(cfg)

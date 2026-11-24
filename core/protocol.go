@@ -22,11 +22,13 @@ const (
 	coreMemoryMethod      CoreMethod = "core.memory"
 	coreCrashMethod       CoreMethod = "core.crash"
 
-	configSetupMethod    CoreMethod = "config.setup"
-	configUpdateMethod   CoreMethod = "config.update"
-	configValidateMethod CoreMethod = "config.validate"
-	configDecryptMethod  CoreMethod = "config.decrypt"
-	configReadMethod     CoreMethod = "config.read"
+	configSetupMethod      CoreMethod = "config.setup"
+	configUpdateMethod     CoreMethod = "config.update"
+	configValidateMethod   CoreMethod = "config.validate"
+	configDecryptMethod    CoreMethod = "config.decrypt"
+	configReadMethod       CoreMethod = "config.read"
+	configISPStatusMethod  CoreMethod = "config.ispStatus"
+	configISPMonitorMethod CoreMethod = "config.ispMonitor"
 
 	profileBaseMethod        CoreMethod = "profile.base"
 	profileOutboundsMethod   CoreMethod = "profile.outbounds"

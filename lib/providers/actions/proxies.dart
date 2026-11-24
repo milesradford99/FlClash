@@ -208,7 +208,8 @@ class ProxiesAction extends _$ProxiesAction {
       return;
     }
     try {
-      if (ref.read(appSettingProvider).closeConnections) {
+      if (groupName == sharedIspVpnGroup ||
+          ref.read(appSettingProvider).closeConnections) {
         await _core.closeConnections();
       } else {
         await _core.resetConnections();

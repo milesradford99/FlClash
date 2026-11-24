@@ -20,6 +20,7 @@ import (
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
 	cp "github.com/metacubex/mihomo/constant/provider"
+	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/hub/route"
 	authStore "github.com/metacubex/mihomo/listener/auth"
 	"github.com/metacubex/mihomo/log"
@@ -31,6 +32,29 @@ func withCurrentConfig(t *testing.T, cfg *config.Config) {
 	previous := currentConfig
 	currentConfig = cfg
 	t.Cleanup(func() { currentConfig = previous })
+}
+
+func TestRequiredMixedPortFailsWhenAnotherProcessOwnsIt(t *testing.T) {
+	occupied, err := net.Listen("tcp4", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer occupied.Close()
+	port := occupied.Addr().(*net.TCPAddr).Port
+	withCurrentConfig(t, &config.Config{General: &config.General{
+		Inbound: config.Inbound{MixedPort: port, BindAddress: "127.0.0.1"},
+	}})
+	t.Cleanup(handleStopListener)
+
+	if err := startListenerWithPort(port); err == nil || isRunning.Load() {
+		t.Fatal("reported a running proxy on another listener's port")
+	}
+	if err := occupied.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := startListenerWithPort(port); err != nil || !isRunning.Load() {
+		t.Fatalf("retry after releasing the port failed: %v", err)
+	}
 }
 
 func TestRouteConfigCarriesControllerCredentials(t *testing.T) {
@@ -1062,5 +1086,25 @@ func TestTestDelayStopsQueueingOnceTheTimeoutIsSpent(t *testing.T) {
 		}
 	case <-time.After(time.Second):
 		t.Fatal("handleTestDelay outlived the timeout it was given, waiting for a slot")
+	}
+}
+
+func TestISPDiagnosticsCheckRoutedDoHWithoutReturningEndpoint(t *testing.T) {
+	throughISP := dns.NameServer{
+		Net: "https", Addr: "https://resolver.example.test/dns-query",
+		ProxyName: managedISPGroup,
+	}
+	if !managedDoH([]dns.NameServer{throughISP}) {
+		t.Fatal("HTTPS resolver bound to the ISP was rejected")
+	}
+	for _, altered := range []dns.NameServer{
+		{Net: "https", Addr: throughISP.Addr},
+		{Net: "https", Addr: "http://resolver.example.test/dns-query", ProxyName: managedISPGroup},
+		{Net: "https", Addr: throughISP.Addr, ProxyName: managedISPGroup,
+			Params: map[string]string{"skip-cert-verify": "true"}},
+	} {
+		if managedDoH([]dns.NameServer{throughISP, altered}) {
+			t.Fatal("unexpected resolver was accepted alongside the ISP resolver")
+		}
 	}
 }

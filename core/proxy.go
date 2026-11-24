@@ -198,6 +198,11 @@ func handleChangeProxy(params *ChangeProxyParams) *ChangeProxyResult {
 		return &ChangeProxyResult{Message: err.Error()}
 	}
 	changed := selector.Now() != before
+	if params.GroupName == ispSharedGroup && changed {
+		if monitor := activeISPMonitor.Load(); monitor != nil {
+			monitor.resetChoice()
+		}
+	}
 	refreshRouteLocked(routeUnchanged)
 	return &ChangeProxyResult{Changed: changed}
 }

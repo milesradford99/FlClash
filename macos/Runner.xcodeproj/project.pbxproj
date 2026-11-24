@@ -21,6 +21,10 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		DA414A940000000000000008 /* IspChromeSpaces.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA414A940000000000000009 /* IspChromeSpaces.swift */; };
+		DA414A940000000000000005 /* TunAuthorization.c in Sources */ = {isa = PBXBuildFile; fileRef = DA414A940000000000000006 /* TunAuthorization.c */; };
+		DA414A940000000000000001 /* ManagedNetworkProtection.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA414A940000000000000003 /* ManagedNetworkProtection.swift */; };
+		DA414A940000000000000002 /* FilterPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA414A940000000000000004 /* FilterPolicy.swift */; };
 		331C80D8294CF71000263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C80D7294CF71000263BE5 /* RunnerTests.swift */; };
 		335BBD1B22A9A15E00E9071D /* GeneratedPluginRegistrant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 335BBD1A22A9A15E00E9071D /* GeneratedPluginRegistrant.swift */; };
 		33CC10F12044A3C60003C045 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CC10F02044A3C60003C045 /* AppDelegate.swift */; };
@@ -73,6 +77,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		DA414A940000000000000009 /* IspChromeSpaces.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IspChromeSpaces.swift; sourceTree = "<group>"; };
+		DA414A940000000000000006 /* TunAuthorization.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = TunAuthorization.c; sourceTree = "<group>"; };
+		DA414A940000000000000007 /* TunAuthorization.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TunAuthorization.h; sourceTree = "<group>"; };
+		DA414A940000000000000003 /* ManagedNetworkProtection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagedNetworkProtection.swift; sourceTree = "<group>"; };
+		DA414A940000000000000004 /* FilterPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../NetworkProtection/FilterPolicy.swift; sourceTree = "<group>"; };
 		331C80D5294CF71000263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		331C80D7294CF71000263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		333000ED22D3DE5D00554162 /* Warnings.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Warnings.xcconfig; sourceTree = "<group>"; };
@@ -180,7 +189,12 @@
 			isa = PBXGroup;
 			children = (
 				33CC10F02044A3C60003C045 /* AppDelegate.swift */,
+				DA414A940000000000000006 /* TunAuthorization.c */,
+				DA414A940000000000000007 /* TunAuthorization.h */,
 				33CC11122044BFA00003C045 /* MainFlutterWindow.swift */,
+				DA414A940000000000000003 /* ManagedNetworkProtection.swift */,
+				DA414A940000000000000009 /* IspChromeSpaces.swift */,
+				DA414A940000000000000004 /* FilterPolicy.swift */,
 				33E51913231747F40026EE4D /* DebugProfile.entitlements */,
 				33E51914231749380026EE4D /* Release.entitlements */,
 				33CC11242044D66E0003C045 /* Resources */,
@@ -383,7 +397,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				33CC11132044BFA00003C045 /* MainFlutterWindow.swift in Sources */,
+				DA414A940000000000000001 /* ManagedNetworkProtection.swift in Sources */,
+				DA414A940000000000000008 /* IspChromeSpaces.swift in Sources */,
+				DA414A940000000000000002 /* FilterPolicy.swift in Sources */,
 				33CC10F12044A3C60003C045 /* AppDelegate.swift in Sources */,
+				DA414A940000000000000005 /* TunAuthorization.c in Sources */,
 				335BBD1B22A9A15E00E9071D /* GeneratedPluginRegistrant.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -658,7 +676,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.follow.clash.debug;
+				PRODUCT_BUNDLE_IDENTIFIER = com.milesradford99.flclash.isp.debug;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;

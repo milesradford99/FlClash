@@ -7,6 +7,432 @@ class ProfilesAction extends _$ProfilesAction {
   @override
   void build() {}
 
+  final _managedWork = SerialTaskScheduler();
+  static const _protection = ManagedIspPlatform();
+
+  bool _isManagedRunning(int id) =>
+      ref.read(isStartProvider) && ref.read(currentProfileIdProvider) == id;
+
+  Future<void> changeManagedIspApplication(
+    int id,
+    ManagedIspApplication app, {
+    bool remove = false,
+  }) {
+    return _managedWork.run(() async {
+      final profile = ref.read(profilesProvider).getProfile(id);
+      if (managedIspSystemProtection ||
+          ref.read(safeModeProvider) ||
+          managedIspSourceId(profile?.url ?? '') == null) {
+        throw StateError(currentAppLocalizations.managedIspUnavailable);
+      }
+      final before = await preferences.managedIspApplications(id);
+      final index = before.indexWhere(
+        (entry) => entry.path.toLowerCase() == app.path.toLowerCase(),
+      );
+      if (remove && index < 0) return;
+      final after = [...before];
+      if (remove) {
+        after.removeAt(index);
+      } else if (index < 0) {
+        after.add(app);
+      } else {
+        after[index] = app;
+      }
+      if (!await preferences.saveManagedIspApplications(id, after)) {
+        throw StateError(currentAppLocalizations.managedIspSaveFailed);
+      }
+      if (!_isManagedRunning(id)) return;
+      final setup = ref.read(setupActionProvider.notifier);
+      try {
+        if (!await setup.applyProfile(silence: true)) {
+          throw StateError(currentAppLocalizations.managedIspLocalFailed);
+        }
+      } catch (_) {
+        await preferences.saveManagedIspApplications(id, before);
+        if (_isManagedRunning(id)) await setup.applyProfile(silence: true);
+        rethrow;
+      }
+    });
+  }
+
+  Future<int> createManagedIsp(ManagedIspProfile input) {
+    return _managedWork.run(() async {
+      if (!system.isMacOS || ref.read(safeModeProvider)) {
+        throw StateError('Managed ISP is unavailable in this build.');
+      }
+      final profiles = ref.read(profilesProvider);
+      final source =
+          profiles
+              .where(
+                (item) =>
+                    item.type == ProfileType.url &&
+                    item.url == input.subscription.toString(),
+              )
+              .firstOrNull ??
+          Profile.normal(
+            label: currentAppLocalizations.managedIspPure,
+            url: input.subscription.toString(),
+          );
+      final existing = profiles
+          .where((item) => managedIspSourceId(item.url) == source.id)
+          .firstOrNull;
+      if (existing != null &&
+          (await _protection.protectedProfile == existing.id ||
+              _isManagedRunning(existing.id))) {
+        throw StateError(
+          'Switch to the VPN subscription to update ISP credentials.',
+        );
+      }
+      final managed =
+          existing ??
+          Profile.normal(
+            label: managedIspSystemProtection
+                ? currentAppLocalizations.managedIspMode
+                : currentAppLocalizations.managedIspLocalMode,
+          ).copyWith(url: managedIspUrl(source.id), autoUpdate: false);
+
+      final staged = await _downloadManagedSource(source);
+      final sourceFile = await staged.file;
+      var stored = false;
+      try {
+        final raw = await _core.readConfig(staged.id);
+        final pins = managedIspSystemProtection
+            ? await input.resolve(raw)
+            : const <String, List<String>>{};
+        _validateManagedSource(input, raw, pins);
+        final marker = await managed.file;
+        await marker.writeAsStringAtomically('rules: [ "MATCH,REJECT" ]\n');
+        final digest = await fileSha256(sourceFile.path);
+        final previous = existing == null
+            ? null
+            : await _protection.load(managed.id);
+        await _protection.save(
+          managed.id,
+          input.storage(
+            digest: digest,
+            addresses: pins,
+            previous: previous?['snapshot'] is Map
+                ? Map<String, Object?>.from(previous!['snapshot'] as Map)
+                : null,
+          ),
+        );
+        stored = true;
+        final current = ref.read(profilesProvider).getProfile(source.id);
+        if (profiles.getProfile(source.id) != null &&
+            current?.url != source.url) {
+          throw StateError('The subscription was edited during the download.');
+        }
+        await sourceFile.rename((await source.file).path);
+        final updated = (current ?? source).copyWith(
+          lastUpdateDate: staged.lastUpdateDate,
+          subscriptionInfo: staged.subscriptionInfo,
+        );
+        final provider = ref.read(profilesProvider.notifier);
+        final newSource = provider.labeled(updated);
+        final newManaged = provider.labeled(
+          managed.copyWith(lastUpdateDate: staged.lastUpdateDate),
+        );
+        await database.profilesDao.putAll([
+          newSource.toCompanion(),
+          newManaged.toCompanion(),
+        ]);
+        provider.put(newSource);
+        provider.put(newManaged);
+        if (ref.read(currentProfileIdProvider) == null) {
+          ref.read(currentProfileIdProvider.notifier).value = newSource.id;
+        }
+        return newManaged.id;
+      } catch (_) {
+        if (existing == null && stored) await _protection.remove(managed.id);
+        rethrow;
+      } finally {
+        await sourceFile.safeDelete();
+      }
+    });
+  }
+
+  void _validateManagedSource(
+    ManagedIspProfile input,
+    Map<String, dynamic> raw,
+    Map<String, List<String>> pins,
+  ) {
+    if (managedIspSystemProtection) {
+      input.protectedConfig(
+        raw,
+        pins,
+        tun: managedIspTun,
+        mixedPort: managedIspLocalPort,
+        enableTun: true,
+      );
+    } else {
+      input.sharedConfig(raw, port: managedIspLocalPort);
+    }
+  }
+
+  Future<Profile> _downloadManagedSource(
+    Profile source, {
+    bool protected = false,
+  }) async {
+    final staged = Profile.normal(url: source.url);
+    try {
+      final (bytes, info) = await _readManagedEndpoint(
+        Uri.parse(source.url),
+        protected: protected,
+        maxBytes: 16 << 20,
+      );
+      final updated = await staged.saveFile(
+        decompressUnlabeled(bytes),
+        validate: (path, key) => _core.validateProfile(path, key),
+      );
+      return updated.copyWith(
+        subscriptionInfo: SubscriptionInfo.formHString(info),
+      );
+    } catch (_) {
+      await (await staged.file).safeDelete();
+      throw const FormatException(
+        'The VPN subscription could not be downloaded or parsed.',
+      );
+    }
+  }
+
+  Future<(Uint8List, String?)> _readManagedEndpoint(
+    Uri url, {
+    required bool protected,
+    int maxBytes = 65536,
+    String? accept,
+  }) async {
+    final port = managedIspSystemProtection
+        ? ref.read(patchClashConfigProvider).mixedPort
+        : managedIspLocalPort;
+    if (protected && !isUsableMixedPort(port)) {
+      throw StateError('The protected connection is unavailable.');
+    }
+    final client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 8)
+      ..userAgent = globalState.ua;
+    if (protected) client.findProxy = (_) => 'PROXY 127.0.0.1:$port';
+    try {
+      for (var attempt = 0; attempt < 4; attempt++) {
+        if (url.scheme != 'https' ||
+            url.host.isEmpty ||
+            url.userInfo.isNotEmpty) {
+          break;
+        }
+        final request = await client
+            .getUrl(url)
+            .timeout(const Duration(seconds: 12));
+        request.followRedirects = false;
+        if (accept != null) {
+          request.headers.set(HttpHeaders.acceptHeader, accept);
+        }
+        final response = await request.close().timeout(
+          const Duration(seconds: 12),
+        );
+        final location = response.headers.value(HttpHeaders.locationHeader);
+        if (response.isRedirect && location != null) {
+          await response.drain<void>().timeout(const Duration(seconds: 5));
+          url = url.resolve(location);
+          continue;
+        }
+        if (response.statusCode != HttpStatus.ok) break;
+        final bytes = BytesBuilder(copy: false);
+        await for (final chunk in response.timeout(
+          const Duration(seconds: 12),
+        )) {
+          bytes.add(chunk);
+          if (bytes.length > maxBytes) {
+            throw const FormatException('The response is too large.');
+          }
+        }
+        return (
+          bytes.takeBytes(),
+          response.headers.value('subscription-userinfo'),
+        );
+      }
+      throw StateError('The endpoint rejected the HTTPS request.');
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  Future<List<String>> _resolveThroughManagedIsp(String host) async {
+    final (bytes, _) = await _readManagedEndpoint(
+      Uri.https('1.1.1.1', '/dns-query', {'name': host, 'type': 'A'}),
+      protected: true,
+      accept: 'application/dns-json',
+    );
+    final decoded = jsonDecode(utf8.decode(bytes));
+    if (decoded is! Map ||
+        decoded['Status'] != 0 ||
+        decoded['Answer'] is! List) {
+      throw const FormatException('The upstream host could not be resolved.');
+    }
+    return [
+      for (final answer in decoded['Answer'] as List)
+        if (answer is Map && answer['type'] == 1 && answer['data'] is String)
+          answer['data'] as String,
+    ];
+  }
+
+  Future<String> verifyManagedIsp(Profile profile) async {
+    if (!_isManagedRunning(profile.id) ||
+        managedIspSystemProtection &&
+            await _protection.protectedProfile != profile.id) {
+      throw StateError('The fixed ISP profile is not running.');
+    }
+    if (!managedIspSystemProtection &&
+        (await _core.getIspStatus())['chrome_isp'] != true) {
+      throw StateError('The Chrome ISP listener is not available.');
+    }
+    final (bytes, _) = await _readManagedEndpoint(
+      Uri.parse(managedIspHealthCheck),
+      protected: true,
+    );
+    final lines = utf8.decode(bytes).split('\n');
+    final address = lines
+        .where((line) => line.startsWith('ip='))
+        .firstOrNull
+        ?.substring(3);
+    if (address == null || InternetAddress.tryParse(address) == null) {
+      throw StateError('The fixed exit could not be checked.');
+    }
+    final expected = (await _protection.load(profile.id))?['expectedIp'];
+    if (!_isManagedRunning(profile.id)) {
+      throw StateError('The fixed ISP profile is no longer running.');
+    }
+    if (expected is String &&
+        InternetAddress.tryParse(expected) !=
+            InternetAddress.tryParse(address)) {
+      throw StateError('The observed exit does not match the expected IP.');
+    }
+    return address;
+  }
+
+  Future<void> selectProfile(int? id) {
+    final existing = ref.read(profilesProvider);
+    if (!existing.any((item) => managedIspSourceId(item.url) != null)) {
+      ref.read(currentProfileIdProvider.notifier).value = id;
+      return Future<void>.value();
+    }
+    return _managedWork.run(() async {
+      final profiles = ref.read(profilesProvider);
+      final target = profiles.getProfile(id);
+      final current = ref.read(currentProfileProvider);
+      final managed = managedIspSourceId(target?.url ?? '');
+      final previousManaged = managedIspSourceId(current?.url ?? '');
+      if (managed == null && (!system.isMacOS || ref.read(safeModeProvider))) {
+        ref.read(currentProfileIdProvider.notifier).value = id;
+        return;
+      }
+      final armed = await _protection.protectedProfile;
+      if (managed == null && armed == null && previousManaged == null) {
+        ref.read(currentProfileIdProvider.notifier).value = id;
+        return;
+      }
+      if (managed != null &&
+          (!system.isMacOS ||
+              ref.read(safeModeProvider) ||
+              managedIspSystemProtection && !await _protection.available)) {
+        throw StateError(currentAppLocalizations.managedIspUnavailable);
+      }
+      final setup = ref.read(setupActionProvider.notifier);
+      if (managed == null &&
+          armed != null &&
+          id != await _protection.protectedSource) {
+        throw StateError(currentAppLocalizations.managedIspExitViaPure);
+      }
+      if (managed != null && armed != null && armed != id) {
+        throw StateError(currentAppLocalizations.managedIspExitViaPure);
+      }
+      await setup.changeManagedSelection(
+        target,
+        releaseProtection: managed == null && armed != null,
+      );
+      if (managed != null) {
+        final started = await setup.setRunning(true, initialize: true);
+        if (!started) {
+          throw StateError(
+            managedIspSystemProtection
+                ? currentAppLocalizations.managedIspBlocked
+                : currentAppLocalizations.managedIspLocalFailed,
+          );
+        }
+      } else {
+        await setup.setRunning(true, initialize: true);
+      }
+    });
+  }
+
+  Future<void> refreshManagedIsp(Profile profile) async {
+    final sourceId = managedIspSourceId(profile.url);
+    final source = ref.read(profilesProvider).getProfile(sourceId);
+    if (source != null) await updateProfile(source, showLoading: true);
+  }
+
+  Future<void> _updateManagedSource(Profile source, Profile managed) async {
+    await _managedWork.run(() async {
+      final active = await _protection.protectedProfile;
+      if (active != null && active != managed.id) {
+        throw StateError('Another fixed ISP profile is protected.');
+      }
+      final viaIsp = active != null;
+      final rawStorage = await _protection.load(managed.id);
+      if (rawStorage == null) {
+        throw StateError('Fixed ISP credentials are missing.');
+      }
+      final input = ManagedIspProfile.fromStorage(
+        Uri.parse(source.url),
+        rawStorage,
+      );
+      final staged = await _downloadManagedSource(source, protected: viaIsp);
+      final file = await staged.file;
+      try {
+        final raw = await _core.readConfig(staged.id);
+        final sourceDigest = await fileSha256((await source.file).path);
+        final previous = _managedIspAddresses(rawStorage, sourceDigest);
+        final pins = managedIspSystemProtection
+            ? await input.resolve(
+                raw,
+                previous: previous,
+                resolver: viaIsp ? _resolveThroughManagedIsp : null,
+              )
+            : const <String, List<String>>{};
+        _validateManagedSource(input, raw, pins);
+        final latest = ref.read(profilesProvider).getProfile(source.id);
+        if (latest == null ||
+            latest.url != source.url ||
+            ref.read(profilesProvider).getProfile(managed.id) == null) {
+          return;
+        }
+        await _protection.save(
+          managed.id,
+          input.storage(
+            digest: await fileSha256(file.path),
+            addresses: pins,
+            previous: {'digest': sourceDigest, 'addresses': previous},
+          ),
+        );
+        await file.rename((await latest.file).path);
+        final provider = ref.read(profilesProvider.notifier);
+        provider.put(
+          latest.copyWith(
+            lastUpdateDate: staged.lastUpdateDate,
+            subscriptionInfo: staged.subscriptionInfo,
+          ),
+        );
+        provider.put(managed.copyWith(lastUpdateDate: staged.lastUpdateDate));
+        final selected = ref.read(currentProfileIdProvider);
+        if (selected == managed.id || selected == source.id) {
+          ref
+              .read(setupActionProvider.notifier)
+              .applyProfileDebounce(silence: true, force: true);
+        }
+      } finally {
+        await file.safeDelete();
+      }
+    });
+  }
+
   void updateCurrentSelectedMap(String groupName, String proxyName) {
     final currentProfile = ref.read(currentProfileProvider);
     if (currentProfile != null &&
@@ -38,6 +464,20 @@ class ProfilesAction extends _$ProfilesAction {
   }
 
   Future<void> deleteProfile(int id) async {
+    final profiles = ref.read(profilesProvider);
+    final profile = profiles.getProfile(id);
+    final source = managedIspSourceId(profile?.url ?? '');
+    if (system.isMacOS && !ref.read(safeModeProvider)) {
+      final protected = await _protection.protectedProfile;
+      if (protected != null &&
+          (protected == id || id == await _protection.protectedSource)) {
+        throw StateError(currentAppLocalizations.managedIspExitViaPure);
+      }
+      if (profiles.any((item) => managedIspSourceId(item.url) == id)) {
+        throw StateError(currentAppLocalizations.managedIspRemovePairFirst);
+      }
+      if (source != null) await _protection.remove(id);
+    }
     await ref.read(profilesProvider.notifier).del(id);
     await clearEffect(id);
     final currentProfileId = ref.read(currentProfileIdProvider);
@@ -161,6 +601,14 @@ class ProfilesAction extends _$ProfilesAction {
         ? ref.read(updatingKeysProvider.notifier).start(profile.updatingKey)
         : null;
     try {
+      final managed = ref
+          .read(profilesProvider)
+          .where((item) => managedIspSourceId(item.url) == profile.id)
+          .firstOrNull;
+      if (system.isMacOS && !ref.read(safeModeProvider) && managed != null) {
+        await _updateManagedSource(profile, managed);
+        return;
+      }
       ref.read(profilesProvider.notifier).put(profile);
       final updated = await profile.update(
         validate: (path, key) => _core.validateProfile(path, key),
@@ -492,4 +940,21 @@ class ProfilesAction extends _$ProfilesAction {
       );
     }
   }
+}
+
+Map<String, List<String>> _managedIspAddresses(
+  Map<String, dynamic> storage,
+  String digest,
+) {
+  final snapshot = [
+    storage['snapshot'],
+    storage['previous'],
+  ].whereType<Map>().where((item) => item['digest'] == digest).firstOrNull;
+  final values = snapshot?['addresses'];
+  if (values is! Map) return {};
+  return {
+    for (final MapEntry(:key, :value) in values.entries)
+      if (key is String && value is List)
+        key: value.whereType<String>().toList(),
+  };
 }

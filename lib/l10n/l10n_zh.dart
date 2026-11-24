@@ -1833,6 +1833,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tunAuthorizationFailed => '虚拟网卡授权失败，已关闭。';
 
   @override
+  String get tunCorePermissionFailed =>
+      'macOS 未能设置 Core 权限。若从「文稿」或「下载」打开了 FlClash ISP，请将这个 App 移到「应用程序」后重试。';
+
+  @override
+  String get tunStartFailed => '虚拟网卡启动失败。请关闭其他 VPN 软件的 TUN 后重试，若仍失败可查看日志。';
+
+  @override
   String get sudoPasswordTitle => '输入 sudo 密码';
 
   @override
@@ -3731,4 +3738,231 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get vpnServiceStartFailed => 'VPN 服务无法启动。';
+
+  @override
+  String get managedIspSetup => '配置 VPN 和固定 ISP';
+
+  @override
+  String get managedIspPure => '纯 VPN';
+
+  @override
+  String get managedIspMode => '01 VPN → ISP';
+
+  @override
+  String get managedIspExpected => '预期出口 IP';
+
+  @override
+  String get managedIspConnection => 'SOCKS5 连接串';
+
+  @override
+  String get managedIspLocalMode => 'TUN + Chrome 固定 ISP';
+
+  @override
+  String get managedIspSharedNode => '共享 VPN 节点';
+
+  @override
+  String get managedIspLocalFailed =>
+      '无法启动本机 ISP 代理。请检查 VPN 连接及 17890 端口是否被占用。';
+
+  @override
+  String get managedIspInvalid => '请检查 HTTPS 订阅和 SOCKS5 连接串。';
+
+  @override
+  String get managedIspSaveFailed => '无法创建配置。请检查订阅后重试。';
+
+  @override
+  String get managedIspUnavailable => '此构建未包含已签名的 macOS 网络过滤器。';
+
+  @override
+  String get managedIspBlocked => '固定 ISP 连接不可用。请检查 macOS 网络过滤授权和 VPN 连接。';
+
+  @override
+  String get managedIspExitViaPure => '请选择关联的纯 VPN 配置，退出固定 ISP 模式。';
+
+  @override
+  String get managedIspRemovePairFirst => '请先移除关联的固定 ISP 配置。';
+
+  @override
+  String get managedIspCheck => '检查固定出口';
+
+  @override
+  String get managedIspWaiting => '等待固定出口';
+
+  @override
+  String get ispDiagOpenIspChrome => '用固定 ISP 打开 Chrome';
+
+  @override
+  String get ispDiagNewChromeSpace => '新建空间';
+
+  @override
+  String get ispAppsTitle => '指定应用';
+
+  @override
+  String get ispMonitorSettings => '链路检查设置';
+
+  @override
+  String get ispMonitorPeriodic => '定时检查当前链路';
+
+  @override
+  String get ispMonitorInterval => '检查间隔（秒）';
+
+  @override
+  String get ispMonitorHint => '有 ISP 流量时按间隔检查。连接失败时会按需探测备用节点。';
+
+  @override
+  String get ispMonitorChecking => '正在检查 ISP 链路';
+
+  @override
+  String get ispMonitorDown => '固定 ISP 暂不可用，已进入重试冷却';
+
+  @override
+  String get ispMonitorInvalidInterval => '请输入 1 至 86400 秒。';
+
+  @override
+  String get ispAppsAdd => '添加应用';
+
+  @override
+  String get ispAppsStart => '启动固定 ISP';
+
+  @override
+  String get ispAppsWaiting => '等待应用连接';
+
+  @override
+  String get ispAppsMatched => '已命中固定 ISP';
+
+  @override
+  String get ispAppsNeedsTun => '等待启动 TUN';
+
+  @override
+  String get ispAppsHint => '规则对新连接生效。外部程序需单独添加。';
+
+  @override
+  String get ispAppsFailed => '无法更新指定应用。请选择 App 或可执行文件，或重试。';
+
+  @override
+  String get ispDiagOpenChromeSpace => '打开';
+
+  @override
+  String get ispDiagDuplicateChromeSpace => '已有同名空间。';
+
+  @override
+  String get ispDiagChromeIsolation => '各空间分别保存标签页、登录和 Cookie，共用当前固定 ISP。';
+
+  @override
+  String get ispDiagChromeAvailable => '已安装';
+
+  @override
+  String get ispDiagChromeLaunchFailed =>
+      '无法打开固定 ISP 的 Chrome。请检查 Chrome 是否已安装，再重试。';
+
+  @override
+  String get ispDiagNoIspProfile => '请先保存固定 ISP 配置；已有多份配置时，从对应卡片打开。';
+
+  @override
+  String get ispDiagWebRtcPending => '待 macOS 确认安装';
+
+  @override
+  String get ispDiagWebRtcManagedNote => '如果 Chrome 由单位管理，请先在 Chrome 中核对现有策略。';
+
+  @override
+  String get ispDiagWebRtcUnset => '系统策略未设置';
+
+  @override
+  String get ispDiagTimeZone => '时区';
+
+  @override
+  String get ispDiagAdvanced => '高级诊断';
+
+  @override
+  String get ispDiagDetect => '一键检测';
+
+  @override
+  String get ispDiagConfigure => '一键配置…';
+
+  @override
+  String get ispDiagReview => '确认配置变更';
+
+  @override
+  String get ispDiagRepair => '通过 FlClash 重新应用固定 ISP 配置，该模式下的现有连接可能短暂中断。';
+
+  @override
+  String get ispDiagInstall =>
+      '打开 macOS 安装入口。WebRTC 策略会作用于这台 Mac 的所有 Chrome Profile。';
+
+  @override
+  String get ispDiagConfirmProfile => '我已在 chrome://version 核对 Profile Path';
+
+  @override
+  String get ispDiagMissingProfile =>
+      '请选择或新建 Chrome Profile，并在 chrome://version 核对目录尾名。';
+
+  @override
+  String get ispDiagPolicyConflict => '已有不同的受管 WebRTC 策略。请先由用户或管理员处理冲突。';
+
+  @override
+  String get ispDiagPolicyReview =>
+      '请在目标 Profile 的 chrome://policy 重新加载并核对值、来源、范围、强制级别及状态。';
+
+  @override
+  String get ispDiagBrowserProbe => '打开 Chrome 探测页';
+
+  @override
+  String get ispDiagProbeUrl => '已授权的 HTTPS 探测地址';
+
+  @override
+  String get ispDiagProbeImport => '粘贴浏览器探测结果';
+
+  @override
+  String get ispDiagProbeApprove =>
+      '运行已授权的网络探测？HTTPS 使用当前 FlClash 路径。全机保护模式还会尝试系统 DNS 解析。';
+
+  @override
+  String get ispDiagProbeEvidence => '导入浏览器证据';
+
+  @override
+  String get ispDiagBrowserBehavior => '行为测试';
+
+  @override
+  String get ispDiagBrowserExternal => '需要对照和外部证据才能确认 DNS 出口或 WebRTC 旁路情况。';
+
+  @override
+  String get ispDiagResolver => 'macOS 解析器';
+
+  @override
+  String get ispDiagCoreRoute => '内核规则与 DNS';
+
+  @override
+  String get ispDiagSystemProtection => 'TUN 与系统过滤器';
+
+  @override
+  String get ispDiagPassed => '通过';
+
+  @override
+  String get ispDiagFailed => '失败';
+
+  @override
+  String get ispDiagUnverified => '未验证';
+
+  @override
+  String get ispDiagAction => '需用户操作';
+
+  @override
+  String get ispDiagNotApplicable => '不适用';
+
+  @override
+  String get managedIspEnvironment => '检查 macOS 和 Chrome';
+
+  @override
+  String get managedIspChromeManaged =>
+      '已读取到 Chrome WebRTC 受管策略。请在实际使用的 Chrome profile 中打开 chrome://policy 核对。';
+
+  @override
+  String get managedIspChromeMissing =>
+      '请在 macOS 设置里确认安装 WebRTC 策略，再打开 chrome://policy 核对。';
+
+  @override
+  String get managedIspChromeAbsent => '未安装 Chrome。';
+
+  @override
+  String get managedIspChromeInstall => '打开 Chrome 策略安装';
 }

@@ -1897,6 +1897,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get tunAuthorizationFailed => 'TUN 권한을 얻지 못해 끄기로 되돌렸습니다.';
 
   @override
+  String get tunCorePermissionFailed =>
+      'macOS가 Core 권한을 설정할 수 없습니다. 문서나 다운로드 폴더에서 FlClash ISP를 열었다면 앱을 응용 프로그램 폴더로 옮긴 후 다시 시도하세요.';
+
+  @override
+  String get tunStartFailed =>
+      'Core가 TUN을 시작하지 못했습니다. 다른 VPN 앱의 TUN을 끄고 다시 시도하세요. 문제가 계속되면 로그를 확인하세요.';
+
+  @override
   String get sudoPasswordTitle => 'sudo 비밀번호를 입력하세요';
 
   @override
@@ -3855,4 +3863,234 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get vpnServiceStartFailed => 'VPN 서비스를 시작하지 못했습니다.';
+
+  @override
+  String get managedIspSetup => 'VPN 및 고정 ISP 설정';
+
+  @override
+  String get managedIspPure => 'VPN 전용';
+
+  @override
+  String get managedIspMode => '01 VPN → ISP';
+
+  @override
+  String get managedIspExpected => '예상 출구 IP';
+
+  @override
+  String get managedIspConnection => 'SOCKS5 연결 URL';
+
+  @override
+  String get managedIspLocalMode => 'TUN + Chrome 고정 ISP';
+
+  @override
+  String get managedIspSharedNode => '공유 VPN 노드';
+
+  @override
+  String get managedIspLocalFailed =>
+      '로컬 ISP 프록시를 시작할 수 없습니다. VPN 연결과 포트 17890의 사용 여부를 확인하세요.';
+
+  @override
+  String get managedIspInvalid => 'HTTPS 구독과 올바른 SOCKS5 연결 URL을 입력하세요.';
+
+  @override
+  String get managedIspSaveFailed => '프로필을 만들 수 없습니다. 구독을 확인하세요.';
+
+  @override
+  String get managedIspUnavailable => '서명된 macOS 네트워크 필터가 없습니다.';
+
+  @override
+  String get managedIspBlocked => '고정 ISP 연결을 사용할 수 없습니다. 필터 승인과 VPN을 확인하세요.';
+
+  @override
+  String get managedIspExitViaPure => '연결된 VPN 프로필로 전환하세요.';
+
+  @override
+  String get managedIspRemovePairFirst => '고정 ISP 프로필을 먼저 삭제하세요.';
+
+  @override
+  String get managedIspCheck => '고정 출구 확인';
+
+  @override
+  String get managedIspWaiting => '고정 출구 대기 중';
+
+  @override
+  String get ispDiagOpenIspChrome => '고정 ISP로 Chrome 열기';
+
+  @override
+  String get ispDiagNewChromeSpace => '새 공간';
+
+  @override
+  String get ispAppsTitle => '지정 앱';
+
+  @override
+  String get ispMonitorSettings => '연결 검사 설정';
+
+  @override
+  String get ispMonitorPeriodic => '현재 연결 주기적으로 검사';
+
+  @override
+  String get ispMonitorInterval => '검사 간격(초)';
+
+  @override
+  String get ispMonitorHint =>
+      'ISP 트래픽이 있을 때 주기적으로 검사합니다. 연결에 실패하면 예비 노드를 검사합니다.';
+
+  @override
+  String get ispMonitorChecking => 'ISP 연결 검사 중';
+
+  @override
+  String get ispMonitorDown => '고정 ISP를 사용할 수 없습니다. 재시도 대기 중입니다.';
+
+  @override
+  String get ispMonitorInvalidInterval => '1~86400초 사이의 간격을 입력하세요.';
+
+  @override
+  String get ispAppsAdd => '앱 추가';
+
+  @override
+  String get ispAppsStart => '고정 ISP 시작';
+
+  @override
+  String get ispAppsWaiting => '앱 연결 대기 중';
+
+  @override
+  String get ispAppsMatched => '고정 ISP 사용 중';
+
+  @override
+  String get ispAppsNeedsTun => 'TUN 시작 대기 중';
+
+  @override
+  String get ispAppsHint => '규칙은 새 연결에 적용됩니다. 외부 프로그램은 따로 추가하세요.';
+
+  @override
+  String get ispAppsFailed => '지정 앱을 업데이트할 수 없습니다. 앱이나 실행 파일을 선택하거나 다시 시도하세요.';
+
+  @override
+  String get ispDiagOpenChromeSpace => '열기';
+
+  @override
+  String get ispDiagDuplicateChromeSpace => '같은 이름의 공간이 있습니다.';
+
+  @override
+  String get ispDiagChromeIsolation =>
+      '각 공간은 탭, 로그인 및 쿠키를 별도로 저장하며 현재 고정 ISP를 사용합니다.';
+
+  @override
+  String get ispDiagChromeAvailable => '설치됨';
+
+  @override
+  String get ispDiagChromeLaunchFailed =>
+      'Chrome을 열 수 없습니다. Chrome 설치 여부를 확인한 후 다시 시도하세요.';
+
+  @override
+  String get ispDiagNoIspProfile => 'ISP 프로필을 저장하세요. 여러 개라면 해당 프로필 카드에서 여세요.';
+
+  @override
+  String get ispDiagWebRtcPending => 'macOS 설치 확인 대기 중';
+
+  @override
+  String get ispDiagWebRtcManagedNote => '조직에서 Chrome을 관리한다면 기존 정책을 먼저 확인하세요.';
+
+  @override
+  String get ispDiagWebRtcUnset => '시스템 정책 미설정';
+
+  @override
+  String get ispDiagTimeZone => '시간대';
+
+  @override
+  String get ispDiagAdvanced => '고급 진단';
+
+  @override
+  String get ispDiagDetect => '지금 감지';
+
+  @override
+  String get ispDiagConfigure => '구성…';
+
+  @override
+  String get ispDiagReview => '변경 사항 검토';
+
+  @override
+  String get ispDiagRepair => '고정 ISP 프로필을 다시 적용합니다. 연결이 잠시 끊길 수 있습니다.';
+
+  @override
+  String get ispDiagInstall =>
+      '이 Mac의 모든 Chrome 프로필에 적용되는 WebRTC 정책 설치 화면을 엽니다.';
+
+  @override
+  String get ispDiagConfirmProfile => 'chrome://version에서 프로필 확인 완료';
+
+  @override
+  String get ispDiagMissingProfile =>
+      '프로필을 선택하거나 만든 뒤 chrome://version에서 디렉터리를 확인하세요.';
+
+  @override
+  String get ispDiagPolicyConflict => '다른 관리형 WebRTC 정책이 적용 중입니다. 관리자에게 문의하세요.';
+
+  @override
+  String get ispDiagPolicyReview =>
+      'chrome://policy를 새로 고침하고 값, 출처, 범위, 수준, 상태를 확인하세요.';
+
+  @override
+  String get ispDiagBrowserProbe => 'Chrome 테스트 열기';
+
+  @override
+  String get ispDiagProbeUrl => '승인된 HTTPS URL';
+
+  @override
+  String get ispDiagProbeImport => '브라우저 결과 붙여넣기';
+
+  @override
+  String get ispDiagProbeApprove =>
+      '승인된 테스트를 실행할까요? HTTPS는 현재 경로를 쓰며 시스템 보호에서는 시스템 DNS도 확인합니다.';
+
+  @override
+  String get ispDiagProbeEvidence => '브라우저 증거 가져오기';
+
+  @override
+  String get ispDiagBrowserBehavior => '동작 테스트';
+
+  @override
+  String get ispDiagBrowserExternal =>
+      'DNS 출구와 WebRTC를 확인하려면 대조 테스트와 외부 증거가 필요합니다.';
+
+  @override
+  String get ispDiagResolver => 'macOS 리졸버';
+
+  @override
+  String get ispDiagCoreRoute => '코어 경로 및 DNS';
+
+  @override
+  String get ispDiagSystemProtection => 'TUN 및 시스템 필터';
+
+  @override
+  String get ispDiagPassed => '통과';
+
+  @override
+  String get ispDiagFailed => '실패';
+
+  @override
+  String get ispDiagUnverified => '미확인';
+
+  @override
+  String get ispDiagAction => '조치 필요';
+
+  @override
+  String get ispDiagNotApplicable => '해당 없음';
+
+  @override
+  String get managedIspEnvironment => 'macOS 및 Chrome 확인';
+
+  @override
+  String get managedIspChromeManaged =>
+      'Chrome WebRTC 정책이 관리됩니다. chrome://policy에서 확인하세요.';
+
+  @override
+  String get managedIspChromeMissing =>
+      'macOS 설정에서 WebRTC 정책을 설치한 후 chrome://policy를 확인하세요.';
+
+  @override
+  String get managedIspChromeAbsent => 'Chrome이 설치되지 않았습니다.';
+
+  @override
+  String get managedIspChromeInstall => 'Chrome 정책 설치 열기';
 }

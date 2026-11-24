@@ -24,6 +24,8 @@
   </picture>
 </p>
 
+> 此 fork 的 macOS 固定 ISP 版本提供关联 profile、订阅刷新和系统网络过滤。独立测试机的签名构建及验收见 [FlClash ISP 构建与验收](macos/NetworkProtection/README.md)。
+
 ## 功能
 
 - **一个应用覆盖 Android、Windows、macOS 和 Linux**，桌面端同时提供 x64 与 ARM64 版本。
@@ -65,8 +67,8 @@ brew install --cask flclash
 
 **无人值守的桌面环境**
 
-FlClash 要在免责声明被接受后才会启动核心。在容器等无人点击的环境里，可在应用的环境变量中设置
-`FLCLASH_ACCEPT_DISCLAIMER=1`，首次启动时即视为接受。
+Windows 和 Linux 上，FlClash 在免责声明被接受后启动核心。在容器等无人值守环境里，可在应用的环境变量中设置
+`FLCLASH_ACCEPT_DISCLAIMER=1`。
 
 ## 使用
 

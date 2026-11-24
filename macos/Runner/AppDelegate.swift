@@ -1,5 +1,6 @@
 import Cocoa
 import FlutterMacOS
+import Security
 
 @main
 class AppDelegate: FlutterAppDelegate {
@@ -52,6 +53,46 @@ class AppDelegate: FlutterAppDelegate {
     override func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         NotificationCenter.default.post(name: .flClashApplicationReopen, object: nil)
         return false
+    }
+}
+
+enum MacOSTunAuthorization {
+    static func authorizeCore() -> String {
+        guard let identifier = Bundle.main.bundleIdentifier,
+              let directory = Bundle.main.executableURL?.deletingLastPathComponent() else {
+            return "error"
+        }
+        let core = directory.appendingPathComponent("FlClashCore")
+        guard let hostInfo = signingInfo(Bundle.main.bundleURL) else { return "signature" }
+        guard let team = hostInfo[kSecCodeInfoTeamIdentifier] as? String, !team.isEmpty else {
+            return "development"
+        }
+        guard (try? core.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink) == false,
+              let coreInfo = signingInfo(core),
+              coreInfo[kSecCodeInfoTeamIdentifier] as? String == team,
+              coreInfo[kSecCodeInfoIdentifier] as? String == identifier + ".core" else {
+            return "signature"
+        }
+
+        switch FlClashAuthorizeCore(core.path) {
+        case FlClashTunReady: return "success"
+        case FlClashTunPermissionFailed: return "permissions"
+        default: return "error"
+        }
+    }
+
+    private static func signingInfo(_ url: URL) -> [CFString: Any]? {
+        var code: SecStaticCode?
+        guard SecStaticCodeCreateWithPath(url as CFURL, [], &code) == errSecSuccess,
+              let code,
+              SecStaticCodeCheckValidity(code, SecCSFlags(rawValue: kSecCSStrictValidate), nil) == errSecSuccess else {
+            return nil
+        }
+        var information: CFDictionary?
+        guard SecCodeCopySigningInformation(code, SecCSFlags(rawValue: kSecCSSigningInformation), &information) == errSecSuccess else {
+            return nil
+        }
+        return information as? [CFString: Any]
     }
 }
 

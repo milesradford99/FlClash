@@ -5,6 +5,8 @@ import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/managed_isp/application.dart';
+import 'package:fl_clash/features/managed_isp/monitor.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -133,6 +135,56 @@ class Preferences {
   Future<bool> saveConfig(Config config) async {
     final preferences = await _store.value;
     return preferences?.setString(configKey, json.encode(config)) ?? false;
+  }
+
+  Future<List<ManagedIspApplication>> managedIspApplications(int id) async {
+    final preferences = await _store.value;
+    final raw = preferences?.getStringList('managedIspApplications.$id') ?? [];
+    return [
+      for (final item in raw)
+        ManagedIspApplication.fromJson(json.decode(item) as Map),
+    ];
+  }
+
+  Future<IspMonitorSettings> ispMonitorSettings() async {
+    final store = await _store.value;
+    final raw = store?.getString('ispMonitorSettings');
+    if (raw != null) {
+      try {
+        if (json.decode(raw) case {
+          'enabled': final bool enabled,
+          'seconds': final int seconds,
+        } when validIspMonitorSeconds(seconds)) {
+          return (enabled: enabled, seconds: seconds);
+        }
+      } on FormatException {
+        return defaultIspMonitorSettings;
+      }
+    }
+    return defaultIspMonitorSettings;
+  }
+
+  Future<bool> saveIspMonitorSettings(IspMonitorSettings settings) async {
+    final store = await _store.value;
+    return store?.setString(
+          'ispMonitorSettings',
+          json.encode({
+            'enabled': settings.enabled,
+            'seconds': settings.seconds,
+          }),
+        ) ??
+        false;
+  }
+
+  Future<bool> saveManagedIspApplications(
+    int id,
+    List<ManagedIspApplication> applications,
+  ) async {
+    final preferences = await _store.value;
+    return preferences?.setStringList('managedIspApplications.$id', [
+          for (final app in applications) json.encode(app.toJson()),
+        ]) ??
+        false;
   }
 
   Future<SystemDnsRecord?> getSystemDnsRecord() async {

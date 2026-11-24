@@ -69,8 +69,8 @@ AppIndicator and KStatusNotifierItem Support extension.
 
 **Unattended desktop**
 
-FlClash starts the core only after the disclaimer is accepted. Where nobody can click it, such as a container, set
-`FLCLASH_ACCEPT_DISCLAIMER=1` in the app's environment to accept it on first launch.
+On Windows and Linux, FlClash starts the core after the disclaimer is accepted. For unattended installs such as a
+container, set `FLCLASH_ACCEPT_DISCLAIMER=1` in the app's environment.
 
 ## Usage
 

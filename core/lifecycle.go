@@ -1,6 +1,8 @@
 package core
 
 import (
+	"errors"
+	"maps"
 	"runtime"
 	"runtime/debug"
 	"sync"
@@ -45,21 +47,40 @@ func setRunning(running bool) {
 }
 
 func handleStartListener() {
+	_ = startListenerWithPort(0)
+}
+
+func startListenerWithPort(requiredMixedPort int) error {
 	configMu.Lock()
 	defer configMu.Unlock()
 	setRunning(true)
 	updateListeners(currentConfig)
+	var err error
+	if requiredMixedPort != 0 && listener.GetPorts().MixedPort != requiredMixedPort {
+		setRunning(false)
+		listener.StopListener()
+		stopISPListener()
+		err = errors.New("could not bind the required mixed proxy port")
+	}
+	if m := activeISPMonitor.Load(); m != nil {
+		m.resume()
+	}
 	resolver.ResetConnection()
 	// A probe already out left before the TUN routes and over the DNS
 	// connections just dropped, so its answer must not stand for this route.
 	bumpRouteEpoch()
+	return err
 }
 
 func handleStopListener() {
 	configMu.Lock()
 	defer configMu.Unlock()
 	setRunning(false)
+	if m := activeISPMonitor.Load(); m != nil {
+		m.pause()
+	}
 	listener.StopListener()
+	stopISPListener()
 	resolver.ResetConnection()
 	bumpRouteEpoch()
 }
@@ -69,7 +90,13 @@ func updateListeners(cfg *config.Config) {
 		return
 	}
 	general := cfg.General
-	listener.PatchInboundListeners(cfg.Listeners, tunnel.Tunnel, true)
+	inbounds := cfg.Listeners
+	if _, reserved := inbounds[ispInboundName]; reserved {
+		inbounds = maps.Clone(inbounds)
+		delete(inbounds, ispInboundName)
+	}
+	listener.PatchInboundListeners(inbounds, tunnel.Tunnel, true)
+	updateISPListener(cfg)
 
 	listener.SetAllowLan(general.AllowLan)
 	inbound.SetSkipAuthPrefixes(general.SkipAuthPrefixes)
@@ -96,7 +123,9 @@ func handleShutdown() {
 
 	configMu.Lock()
 	setRunning(false)
+	installISPMonitor(nil)
 	listener.StopListener()
+	stopISPListener()
 	updater.StopGeoUpdater()
 	executor.Shutdown()
 	currentConfig = nil
