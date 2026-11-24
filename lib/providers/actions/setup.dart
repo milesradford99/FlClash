@@ -43,6 +43,7 @@ class SetupAction extends _$SetupAction {
   bool _checkingManagedIsp = false;
   bool get _managedSelected =>
       system.isMacOS &&
+      ref.read(currentProfileIdProvider) != null &&
       managedIspSourceId(ref.read(currentProfileProvider)?.url ?? '') != null;
 
   final _setupScheduler = SerialTaskScheduler();

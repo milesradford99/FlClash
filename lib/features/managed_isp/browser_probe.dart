@@ -17,7 +17,7 @@ String ispBrowserProbePage({required bool chinese, required String nonce}) {
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src https: stun: stuns: turn: turns:; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
 <title>$title</title>
 <style>
-  body { color-scheme: light dark; font: 16px system-ui; max-width: 40rem; margin: 8vh auto; padding: 1rem; }
+  body { color-scheme: light dark; font: 1rem system-ui; max-width: 40rem; margin: 8vh auto; padding: 1rem; }
   label,textarea,input { display:block; box-sizing:border-box; width:100%; margin:.5rem 0; }
   button,input,textarea { font:inherit; padding:.5rem; }
 </style>
