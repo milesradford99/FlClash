@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"runtime"
 	"runtime/debug"
 	"sync"
@@ -45,14 +46,25 @@ func setRunning(running bool) {
 }
 
 func handleStartListener() {
+	_ = startListenerWithPort(0)
+}
+
+func startListenerWithPort(requiredMixedPort int) error {
 	configMu.Lock()
 	defer configMu.Unlock()
 	setRunning(true)
 	updateListeners(currentConfig)
+	var err error
+	if requiredMixedPort != 0 && listener.GetPorts().MixedPort != requiredMixedPort {
+		setRunning(false)
+		listener.StopListener()
+		err = errors.New("could not bind the required mixed proxy port")
+	}
 	resolver.ResetConnection()
 	// A probe already out left before the TUN routes and over the DNS
 	// connections just dropped, so its answer must not stand for this route.
 	bumpRouteEpoch()
+	return err
 }
 
 func handleStopListener() {

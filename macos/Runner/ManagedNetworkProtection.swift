@@ -40,19 +40,164 @@ final class ManagedNetworkProtection: NSObject, OSSystemExtensionRequestDelegate
         return false
     }
 
-    func environment() -> [String: Any] {
+    func environment() async -> [String: Any] {
         let chrome = "com.google.Chrome" as CFString
-        let key = "WebRtcIPHandling" as CFString
+        let webRtc = "WebRtcIPHandling" as CFString
+        let doh = "DnsOverHttpsMode" as CFString
+        let templates = "DnsOverHttpsTemplates" as CFString
+        let installed = chromeURL != nil
+        let resolvers = await Task.detached { Self.resolverCounts() }.value
         return [
             "locale": Locale.current.identifier,
+            "languages": Locale.preferredLanguages,
             "timeZone": TimeZone.current.identifier,
-            "chromeInstalled": NSWorkspace.shared.urlForApplication(withBundleIdentifier: chrome as String) != nil,
-            "webRtcManaged": CFPreferencesAppValueIsForced(key, chrome) &&
-                CFPreferencesCopyAppValue(key, chrome) as? String == "disable_non_proxied_udp",
+            "chromeInstalled": installed,
+            "chromeProfiles": installed ? Self.chromeProfiles() : [],
+            "webRtcForced": CFPreferencesAppValueIsForced(webRtc, chrome),
+            "webRtcValue": CFPreferencesCopyAppValue(webRtc, chrome) as? String ?? "",
+            "dohMode": CFPreferencesCopyAppValue(doh, chrome) as? String ?? "",
+            "dohForced": CFPreferencesAppValueIsForced(doh, chrome),
+            "dohTemplatesSet": !(CFPreferencesCopyAppValue(templates, chrome) as? String ?? "").isEmpty,
+            "dohTemplatesForced": CFPreferencesAppValueIsForced(templates, chrome),
+            "resolvers": resolvers,
+            "tunReady": tunReady,
         ]
     }
 
+    private var chromeURL: URL? {
+        NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.google.Chrome")
+    }
+
+    private static let ispChromeID = "flclash-isp-chrome"
+
+    private static var ispChromeData: URL? {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+            .first?.appendingPathComponent(Bundle.main.bundleIdentifier ?? "flclash")
+            .appendingPathComponent("Chrome ISP")
+    }
+
+    private static func chromeProfiles() -> [[String: String]] {
+        var result = [[String: String]]()
+        if let data = ispChromeData, FileManager.default.fileExists(atPath: data.path) {
+            result.append(["id": ispChromeID, "name": "Chrome ISP"])
+        }
+        let state = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/Google/Chrome/Local State")
+        guard let attrs = try? FileManager.default.attributesOfItem(atPath: state.path),
+              let size = attrs[.size] as? NSNumber, size.intValue <= 16 * 1024 * 1024,
+              let data = try? Data(contentsOf: state),
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let profile = root["profile"] as? [String: Any],
+              let cache = profile["info_cache"] as? [String: [String: Any]] else { return result }
+        return result + cache.keys.sorted().compactMap { directory in
+            guard validChromeDirectory(directory), cache[directory]?["is_omitted"] as? Bool != true
+            else { return nil }
+            let name = (cache[directory]?["name"] as? String ?? directory)
+                .replacingOccurrences(of: "[[:cntrl:]]", with: "", options: .regularExpression)
+            return ["id": directory, "name": String(name.prefix(80))]
+        }
+    }
+
+    private static func validChromeDirectory(_ directory: String) -> Bool {
+        directory.range(of: #"^(Default|Profile [0-9]{1,8})$"#, options: .regularExpression) != nil
+    }
+
+    private nonisolated static func resolverCounts() -> [String: Int] {
+        let process = Process()
+        let pipe = Pipe()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/scutil")
+        process.arguments = ["--dns"]
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+        process.environment = ["LC_ALL": "C"]
+        do { try process.run() } catch { return [:] }
+        let bytes = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0, let output = String(data: bytes, encoding: .utf8)
+        else { return [:] }
+        var counts = ["default": 0, "domain": 0, "scoped": 0]
+        var scoped = false
+        for block in output.components(separatedBy: "\n\n") {
+            if block.contains("for scoped queries") { scoped = true }
+            guard block.contains("resolver #"), block.contains("nameserver[") else { continue }
+            let byDomain = block.split(separator: "\n").contains {
+                $0.trimmingCharacters(in: .whitespaces).hasPrefix("domain ")
+            }
+            let key = scoped ? "scoped" : (byDomain ? "domain" : "default")
+            counts[key, default: 0] += 1
+        }
+        return counts
+    }
+
+    func openEnvironmentShortcut(_ kind: String, directory: String?) throws {
+        let settings: [String: String] = [
+            "locale": "com.apple.Localization-Settings.extension",
+            "timeZone": "com.apple.Date-Time-Settings.extension",
+            "profiles": "com.apple.Profiles-Settings.extension",
+        ]
+        if let pane = settings[kind] {
+            guard let url = URL(string: "x-apple.systempreferences:" + pane),
+                  NSWorkspace.shared.open(url) else { throw ProtectionError.unavailable }
+            return
+        }
+        let pages: [String: String] = [
+            "version": "chrome://version/",
+            "policy": "chrome://policy/",
+            "security": "chrome://settings/security",
+            "languages": "chrome://settings/languages",
+            "picker": "chrome://profile-picker/",
+        ]
+        guard let target = pages[kind] else { throw ProtectionError.unavailable }
+        try openChrome(target, directory: directory)
+    }
+
+    func openBrowserProbe(_ html: String, directory: String) throws {
+        guard html.utf8.count <= 64 * 1024 else { throw ProtectionError.unavailable }
+        let file = FileManager.default.temporaryDirectory
+            .appendingPathComponent("FlClash-ISP-browser-check.html")
+        try Data(html.utf8).write(to: file, options: .atomic)
+        try openChrome(file.absoluteString, directory: directory)
+    }
+
+    func openIspChrome(_ port: Int) throws {
+        guard (1...65535).contains(port) else { throw ProtectionError.unavailable }
+        try openChrome("about:blank", directory: Self.ispChromeID, ispPort: port)
+    }
+
+    private func openChrome(_ target: String, directory: String?, ispPort: Int? = nil) throws {
+        guard let app = chromeURL, let executable = Bundle(url: app)?.executableURL else {
+            throw ProtectionError.unavailable
+        }
+        var arguments: [String] = []
+        if directory == Self.ispChromeID {
+            guard let data = Self.ispChromeData else { throw ProtectionError.unavailable }
+            arguments = [
+                "--user-data-dir=" + data.path,
+                "--profile-directory=Default",
+                "--no-first-run",
+                "--proxy-server=socks5://127.0.0.1:" + String(ispPort ?? 17890),
+                "--force-webrtc-ip-handling-policy=disable_non_proxied_udp",
+            ]
+        } else if let directory {
+            guard Self.validChromeDirectory(directory),
+                  Self.chromeProfiles().contains(where: { $0["id"] == directory })
+            else { throw ProtectionError.unavailable }
+            arguments.append("--profile-directory=" + directory)
+        }
+        let process = Process()
+        process.executableURL = executable
+        process.arguments = arguments + [target]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        try process.run()
+    }
+
     func openChromeProfile() throws {
+        let chrome = "com.google.Chrome" as CFString
+        let key = "WebRtcIPHandling" as CFString
+        guard chromeURL != nil, !CFPreferencesAppValueIsForced(key, chrome) else {
+            throw ProtectionError.unavailable
+        }
         let name = "FlClash ISP Chrome WebRTC"
         let domain = (Bundle.main.bundleIdentifier ?? "flclash") + ".chrome.webrtc"
         let policy: [String: Any] = [

@@ -26,7 +26,30 @@ class MainFlutterWindow: NSWindow {
                         case "tunReady":
                             reply(protection.tunReady)
                         case "environment":
-                            reply(protection.environment())
+                            reply(await protection.environment())
+                        case "environmentShortcut":
+                            guard let args = call.arguments as? [String: String],
+                                  let kind = args["kind"] else {
+                                reply(FlutterError(code: "invalidShortcut", message: nil, details: nil))
+                                return
+                            }
+                            try protection.openEnvironmentShortcut(kind, directory: args["directory"])
+                            reply(nil)
+                        case "openIspChrome":
+                            guard let port = call.arguments as? Int else {
+                                reply(FlutterError(code: "invalidPort", message: nil, details: nil))
+                                return
+                            }
+                            try protection.openIspChrome(port)
+                            reply(nil)
+                        case "openBrowserProbe":
+                            guard let args = call.arguments as? [String: String],
+                                  let html = args["html"], let directory = args["directory"] else {
+                                reply(FlutterError(code: "invalidProbe", message: nil, details: nil))
+                                return
+                            }
+                            try protection.openBrowserProbe(html, directory: directory)
+                            reply(nil)
                         case "openChromeProfile":
                             try protection.openChromeProfile()
                             reply(nil)

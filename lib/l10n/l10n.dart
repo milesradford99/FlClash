@@ -6972,10 +6972,28 @@ abstract class AppLocalizations {
   /// **'Expected exit IP'**
   String get managedIspExpected;
 
+  /// No description provided for @managedIspConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'SOCKS5 connection URL'**
+  String get managedIspConnection;
+
+  /// No description provided for @managedIspLocalMode.
+  ///
+  /// In en, this message translates to:
+  /// **'VPN → ISP (local proxy)'**
+  String get managedIspLocalMode;
+
+  /// No description provided for @managedIspLocalFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not start the local ISP proxy. Check the VPN connection and whether port 17890 is in use.'**
+  String get managedIspLocalFailed;
+
   /// No description provided for @managedIspInvalid.
   ///
   /// In en, this message translates to:
-  /// **'Enter a valid HTTPS subscription, SOCKS5 server and credentials.'**
+  /// **'Enter an HTTPS subscription and a valid SOCKS5 connection URL.'**
   String get managedIspInvalid;
 
   /// No description provided for @managedIspSaveFailed.
@@ -7019,6 +7037,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Waiting for fixed exit'**
   String get managedIspWaiting;
+
+  /// No description provided for @ispDiagOpenIspChrome.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Chrome with fixed ISP'**
+  String get ispDiagOpenIspChrome;
+
+  /// No description provided for @ispDiagChromeIsolation.
+  ///
+  /// In en, this message translates to:
+  /// **'The first launch creates a separate Chrome workspace that is reused next time.'**
+  String get ispDiagChromeIsolation;
+
+  /// No description provided for @ispDiagChromeAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed'**
+  String get ispDiagChromeAvailable;
+
+  /// No description provided for @ispDiagChromeLaunchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open Chrome with the fixed ISP. Check that Chrome is installed and try again.'**
+  String get ispDiagChromeLaunchFailed;
+
+  /// No description provided for @ispDiagNoIspProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Save an ISP profile first. If you have more than one, open this from its profile card.'**
+  String get ispDiagNoIspProfile;
+
+  /// No description provided for @ispDiagWebRtcPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting confirmation in macOS'**
+  String get ispDiagWebRtcPending;
+
+  /// No description provided for @ispDiagWebRtcManagedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'If your organization manages Chrome, check its existing policies first.'**
+  String get ispDiagWebRtcManagedNote;
+
+  /// No description provided for @ispDiagWebRtcUnset.
+  ///
+  /// In en, this message translates to:
+  /// **'System policy not set'**
+  String get ispDiagWebRtcUnset;
+
+  /// No description provided for @ispDiagTimeZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Time zone'**
+  String get ispDiagTimeZone;
+
+  /// No description provided for @ispDiagAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced diagnostics'**
+  String get ispDiagAdvanced;
+
+  /// No description provided for @ispDiagDetect.
+  ///
+  /// In en, this message translates to:
+  /// **'Detect now'**
+  String get ispDiagDetect;
+
+  /// No description provided for @ispDiagConfigure.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure…'**
+  String get ispDiagConfigure;
+
+  /// No description provided for @ispDiagReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review changes'**
+  String get ispDiagReview;
+
+  /// No description provided for @ispDiagRepair.
+  ///
+  /// In en, this message translates to:
+  /// **'Reapply the fixed ISP profile through FlClash. This may briefly interrupt its connections.'**
+  String get ispDiagRepair;
+
+  /// No description provided for @ispDiagInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the macOS installer for a WebRTC policy that applies to every Chrome profile on this Mac.'**
+  String get ispDiagInstall;
+
+  /// No description provided for @ispDiagConfirmProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'I verified Profile Path in chrome://version'**
+  String get ispDiagConfirmProfile;
+
+  /// No description provided for @ispDiagMissingProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Select or create a Chrome profile, then confirm its directory in chrome://version.'**
+  String get ispDiagMissingProfile;
+
+  /// No description provided for @ispDiagPolicyConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'A different managed WebRTC policy is present. Resolve it with your administrator before applying a change.'**
+  String get ispDiagPolicyConflict;
+
+  /// No description provided for @ispDiagPolicyReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload chrome://policy in the selected profile to verify the value, source, scope, level and status.'**
+  String get ispDiagPolicyReview;
+
+  /// No description provided for @ispDiagBrowserProbe.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Chrome probe'**
+  String get ispDiagBrowserProbe;
+
+  /// No description provided for @ispDiagProbeUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Authorized HTTPS endpoint'**
+  String get ispDiagProbeUrl;
+
+  /// No description provided for @ispDiagProbeImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste browser probe result'**
+  String get ispDiagProbeImport;
+
+  /// No description provided for @ispDiagProbeApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Run authorized network probe? HTTPS uses the selected FlClash route. Protected mode also attempts system DNS resolution.'**
+  String get ispDiagProbeApprove;
+
+  /// No description provided for @ispDiagProbeEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Import browser evidence'**
+  String get ispDiagProbeEvidence;
+
+  /// No description provided for @ispDiagBrowserBehavior.
+  ///
+  /// In en, this message translates to:
+  /// **'Behavior test'**
+  String get ispDiagBrowserBehavior;
+
+  /// No description provided for @ispDiagBrowserExternal.
+  ///
+  /// In en, this message translates to:
+  /// **'Require a control run and external evidence to verify DNS egress or WebRTC bypass.'**
+  String get ispDiagBrowserExternal;
+
+  /// No description provided for @ispDiagResolver.
+  ///
+  /// In en, this message translates to:
+  /// **'macOS resolvers'**
+  String get ispDiagResolver;
+
+  /// No description provided for @ispDiagCoreRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Core routes and DNS'**
+  String get ispDiagCoreRoute;
+
+  /// No description provided for @ispDiagSystemProtection.
+  ///
+  /// In en, this message translates to:
+  /// **'TUN and system filter'**
+  String get ispDiagSystemProtection;
+
+  /// No description provided for @ispDiagPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'Passed'**
+  String get ispDiagPassed;
+
+  /// No description provided for @ispDiagFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get ispDiagFailed;
+
+  /// No description provided for @ispDiagUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'Unverified'**
+  String get ispDiagUnverified;
+
+  /// No description provided for @ispDiagAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Action required'**
+  String get ispDiagAction;
+
+  /// No description provided for @ispDiagNotApplicable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not applicable'**
+  String get ispDiagNotApplicable;
 
   /// No description provided for @managedIspEnvironment.
   ///

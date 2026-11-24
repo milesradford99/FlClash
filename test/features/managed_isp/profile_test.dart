@@ -24,6 +24,42 @@ Map<String, Object> _node(String name, String server) => {
 };
 
 void main() {
+  test('imports a SOCKS5 URL with percent-encoded credentials', () {
+    final input = ManagedIspProfile.fromConnectionString(
+      subscription: Uri.parse('https://subscription.example.test/profile'),
+      connectionString: ' socks5://test%3Auser:p%40ss%3Aword@192.0.2.4:50101 ',
+    );
+    expect(
+      input.storage(digest: 'fixture', addresses: const {}),
+      containsPair('username', 'test:user'),
+    );
+    expect(
+      input.storage(digest: 'fixture', addresses: const {}),
+      containsPair('password', 'p@ss:word'),
+    );
+    expect(input.ispPort, 50101);
+  });
+
+  test('requires the SOCKS5 scheme, credentials and explicit port', () {
+    for (final connectionString in [
+      'https://user:password@isp.example.test:1080',
+      'socks5://isp.example.test:1080',
+      'socks5://user:password@isp.example.test',
+      'socks5://user:password@isp.example.test:1080/path',
+      'socks5://user:password@isp.example.test:1080?query=value',
+      'socks5://user:password@isp.example.test:1080#fragment',
+    ]) {
+      expect(
+        () => ManagedIspProfile.fromConnectionString(
+          subscription: Uri.parse('https://subscription.example.test/profile'),
+          connectionString: connectionString,
+        ),
+        throwsFormatException,
+        reason: connectionString,
+      );
+    }
+  });
+
   test('keeps the original profile and uses only ISP chains in 01', () {
     final first = _node('Node A', 'one.example.test');
     final second = _node('Node B', 'two.example.test');
@@ -171,6 +207,34 @@ void main() {
     expect(tun['enable'], isTrue);
     expect(tun['device'], 'utun223');
     expect(tun['strict-route'], isTrue);
+  });
+
+  test('local proxy keeps the fixed exit and disables host listeners', () {
+    final plan = _profile().protectedConfig(
+      {
+        'proxies': [_node('VPN', '192.0.2.4')],
+        'rules': ['MATCH,DIRECT'],
+        'listeners': [
+          {'name': 'other inbound', 'proxy': 'DIRECT'},
+        ],
+      },
+      {
+        '192.0.2.4': ['192.0.2.4'],
+        'isp.example.test': ['203.0.113.5'],
+      },
+      tun: 'utun223',
+      mixedPort: 17890,
+      enableTun: false,
+    );
+
+    expect(plan.config['mixed-port'], 17890);
+    expect(plan.config['bind-address'], '127.0.0.1');
+    expect(plan.config['allow-lan'], isFalse);
+    expect(plan.config['tun'], {'enable': false});
+    expect(plan.config['rules'], ['MATCH,Managed ISP']);
+    expect(plan.config, isNot(contains('external-controller')));
+    expect(plan.config, isNot(contains('listeners')));
+    expect((plan.config['dns'] as Map), isNot(contains('listen')));
   });
 
   test(

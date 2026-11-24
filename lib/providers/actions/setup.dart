@@ -42,7 +42,7 @@ class SetupAction extends _$SetupAction {
   Timer? _managedIspTicker;
   bool _checkingManagedIsp = false;
   bool get _managedSelected =>
-      managedIspSystemProtection &&
+      system.isMacOS &&
       managedIspSourceId(ref.read(currentProfileProvider)?.url ?? '') != null;
 
   final _setupScheduler = SerialTaskScheduler();
@@ -166,7 +166,8 @@ class SetupAction extends _$SetupAction {
       globalState.lastConfigMd5 = await preferences.getAppliedConfigMd5();
       await _run(true, initialize: true, resume: true);
     } else if (ref.read(appSettingProvider).autoRun ||
-        (_managedSelected &&
+        (managedIspSystemProtection &&
+            _managedSelected &&
             system.isMacOS &&
             !ref.read(safeModeProvider) &&
             await _protection.protectedProfile ==
@@ -365,7 +366,11 @@ class SetupAction extends _$SetupAction {
 
   @protected
   Future<void> setCoreRunning(bool running) {
-    return running ? _core.startListener() : _core.stopListener();
+    if (!running) return _core.stopListener();
+    if (_managedSelected && !managedIspSystemProtection) {
+      return _core.startMixedListener(managedIspLocalPort);
+    }
+    return _core.startListener();
   }
 
   @protected
@@ -957,7 +962,7 @@ class SetupAction extends _$SetupAction {
           : await _managedPlan(profile!, sourceId);
       await setRunning(false);
       await _core.closeConnections();
-      if (plan != null) {
+      if (managedIspSystemProtection && plan != null) {
         await _protection.arm(
           id: profile!.id,
           sourceId: sourceId!,
@@ -1012,21 +1017,21 @@ class SetupAction extends _$SetupAction {
     Future<void> Function()? preloadInvoke,
     FutureOr Function()? onUpdated,
   }) async {
-    if (!system.isMacOS ||
-        ref.read(safeModeProvider) ||
-        !await _protection.available) {
+    if (!system.isMacOS || ref.read(safeModeProvider)) {
       return _SetupTaskResult.failed;
     }
-    final protectedId = await _protection.protectedProfile;
-    if (protectedId != profile.id) {
-      return _SetupTaskResult.failed;
-    }
-    if (!await requestAdmin(true)) {
-      return _SetupTaskResult.handoffToCoreRestart;
-    }
-    if (ref.read(authorizedTunEnableProvider) !=
-        TunAuthorizationState.authorized) {
-      return _SetupTaskResult.failed;
+    if (managedIspSystemProtection) {
+      if (!await _protection.available ||
+          await _protection.protectedProfile != profile.id) {
+        return _SetupTaskResult.failed;
+      }
+      if (!await requestAdmin(true)) {
+        return _SetupTaskResult.handoffToCoreRestart;
+      }
+      if (ref.read(authorizedTunEnableProvider) !=
+          TunAuthorizationState.authorized) {
+        return _SetupTaskResult.failed;
+      }
     }
     final plan = await _managedPlan(profile, sourceId);
     if (profile.id != ref.read(currentProfileIdProvider)) {
@@ -1035,11 +1040,13 @@ class SetupAction extends _$SetupAction {
     final yaml = await encodeYamlTask(plan.config);
     final digest = yaml.toMd5();
     try {
-      await _protection.arm(
-        id: profile.id,
-        sourceId: sourceId,
-        endpoints: plan.endpoints,
-      );
+      if (managedIspSystemProtection) {
+        await _protection.arm(
+          id: profile.id,
+          sourceId: sourceId,
+          endpoints: plan.endpoints,
+        );
+      }
       if (profile.id != ref.read(currentProfileIdProvider)) {
         return _SetupTaskResult.failed;
       }
@@ -1061,7 +1068,7 @@ class SetupAction extends _$SetupAction {
       }
       await preloadInvoke?.call();
       if (ref.read(isStartProvider)) {
-        if (!await _protection.tunReady) {
+        if (managedIspSystemProtection && !await _protection.tunReady) {
           throw StateError('The fixed ISP tunnel did not start.');
         }
         _watchManagedIsp(profile);
@@ -1074,7 +1081,11 @@ class SetupAction extends _$SetupAction {
       _managedIspTicker = null;
       await globalState.safeRun(() => setRunning(false));
       globalState.lastConfigMd5 = null;
-      throw StateError(currentAppLocalizations.managedIspBlocked);
+      throw StateError(
+        managedIspSystemProtection
+            ? currentAppLocalizations.managedIspBlocked
+            : currentAppLocalizations.managedIspLocalFailed,
+      );
     }
   }
 
@@ -1095,13 +1106,15 @@ class SetupAction extends _$SetupAction {
     if (await fileSha256(sourcePath) != digestBefore) {
       throw StateError(currentAppLocalizations.managedIspSaveFailed);
     }
-    final mixedPort = ref.read(patchClashConfigProvider).mixedPort;
+    final mixedPort = managedIspSystemProtection
+        ? ref.read(patchClashConfigProvider).mixedPort
+        : managedIspLocalPort;
     return input.protectedConfig(
       raw,
       _managedIspAddresses(storage, digestBefore),
       tun: managedIspTun,
       mixedPort: mixedPort,
-      enableTun: true,
+      enableTun: managedIspSystemProtection,
     );
   }
 }

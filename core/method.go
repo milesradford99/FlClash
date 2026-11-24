@@ -187,11 +187,12 @@ var methodHandlers = map[CoreMethod]methodHandler{
 	coreGCMethod:          action(handleForceGC),
 	coreMemoryMethod:      withoutArguments(handleGetMemoryStats),
 
-	configSetupMethod:    command(handleSetupConfig),
-	configUpdateMethod:   command(updateConfig),
-	configValidateMethod: withArguments(handleValidateConfig),
-	configDecryptMethod:  withFallible(handleDecryptConfig),
-	configReadMethod:     withFallible(handleReadConfig),
+	configSetupMethod:     command(handleSetupConfig),
+	configUpdateMethod:    command(updateConfig),
+	configValidateMethod:  withArguments(handleValidateConfig),
+	configDecryptMethod:   withFallible(handleDecryptConfig),
+	configReadMethod:      withFallible(handleReadConfig),
+	configISPStatusMethod: withoutArguments(handleISPStatus),
 
 	profileBaseMethod:        withFallible(handleGetProfileBase),
 	profileOutboundsMethod:   withFallible(handleGetProfileOutbounds),
@@ -229,13 +230,29 @@ var methodHandlers = map[CoreMethod]methodHandler{
 
 	logStartMethod:      action(handleStartLog),
 	logStopMethod:       action(handleStopLog),
-	listenerStartMethod: action(handleStartListener),
+	listenerStartMethod: startListenerHandler,
 	listenerStopMethod:  action(handleStopListener),
 	routeWatchMethod:    watchRouteHandler,
 	routeCheckMethod:    withArguments(handleCheckRoutes),
 
 	probeOutboundIPMethod: withArguments(handleOutboundIp),
 	probeServicesMethod:   withArguments(handleServiceCheck),
+}
+
+func startListenerHandler(call *MethodCall) (any, error) {
+	if len(call.Arguments) == 0 || string(call.Arguments) == "null" {
+		return nil, startListenerWithPort(0)
+	}
+	params, err := decodeArguments[struct {
+		RequiredMixedPort int `json:"requiredMixedPort"`
+	}](call)
+	if err != nil {
+		return nil, err
+	}
+	if params.RequiredMixedPort < 1 || params.RequiredMixedPort > 65535 {
+		return nil, &MethodError{Code: "invalid_arguments", Message: "invalid required mixed proxy port"}
+	}
+	return nil, startListenerWithPort(params.RequiredMixedPort)
 }
 
 func watchRouteHandler(call *MethodCall) (any, error) {

@@ -67,8 +67,8 @@ brew install --cask flclash
 
 **无人值守的桌面环境**
 
-FlClash 要在免责声明被接受后才会启动核心。在容器等无人点击的环境里，可在应用的环境变量中设置
-`FLCLASH_ACCEPT_DISCLAIMER=1`，首次启动时即视为接受。
+Windows 和 Linux 上，FlClash 在免责声明被接受后启动核心。在容器等无人值守环境里，可在应用的环境变量中设置
+`FLCLASH_ACCEPT_DISCLAIMER=1`。
 
 ## 使用
 

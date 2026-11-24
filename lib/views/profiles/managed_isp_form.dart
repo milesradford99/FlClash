@@ -8,6 +8,8 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'managed_isp_diagnostics.dart';
+
 class ManagedIspForm extends ConsumerStatefulWidget {
   const ManagedIspForm({super.key});
 
@@ -17,10 +19,7 @@ class ManagedIspForm extends ConsumerStatefulWidget {
 
 class _ManagedIspFormState extends ConsumerState<ManagedIspForm> {
   final _subscription = TextEditingController();
-  final _server = TextEditingController();
-  final _port = TextEditingController();
-  final _username = TextEditingController();
-  final _password = TextEditingController();
+  final _connection = TextEditingController();
   final _exitIp = TextEditingController();
   bool _saving = false;
   String? _error;
@@ -29,17 +28,13 @@ class _ManagedIspFormState extends ConsumerState<ManagedIspForm> {
     if (_saving) return;
     final labels = context.appLocalizations;
     final subscription = Uri.tryParse(_subscription.text.trim());
-    final port = int.tryParse(_port.text.trim());
     final exitIp = _exitIp.text.trim();
     final ManagedIspProfile input;
     try {
-      if (subscription == null || port == null) throw const FormatException();
-      input = ManagedIspProfile(
+      if (subscription == null) throw const FormatException();
+      input = ManagedIspProfile.fromConnectionString(
         subscription: subscription,
-        ispHost: _server.text,
-        ispPort: port,
-        username: _username.text,
-        password: _password.text,
+        connectionString: _connection.text,
         expectedIp: exitIp.isEmpty ? null : exitIp,
       );
     } on FormatException {
@@ -51,8 +46,10 @@ class _ManagedIspFormState extends ConsumerState<ManagedIspForm> {
       _error = null;
     });
     try {
-      await ref.read(profilesActionProvider.notifier).createManagedIsp(input);
-      if (mounted) Navigator.of(context).pop();
+      final profileId = await ref
+          .read(profilesActionProvider.notifier)
+          .createManagedIsp(input);
+      if (mounted) Navigator.of(context).pop(profileId);
     } catch (_) {
       if (mounted) setState(() => _error = labels.managedIspSaveFailed);
     } finally {
@@ -63,10 +60,7 @@ class _ManagedIspFormState extends ConsumerState<ManagedIspForm> {
   @override
   void dispose() {
     _subscription.dispose();
-    _server.dispose();
-    _port.dispose();
-    _username.dispose();
-    _password.dispose();
+    _connection.dispose();
     _exitIp.dispose();
     super.dispose();
   }
@@ -90,32 +84,10 @@ class _ManagedIspFormState extends ConsumerState<ManagedIspForm> {
               ),
             ),
             FormRow(
-              title: labels.server,
-              trailing: FormRowTextField(
-                controller: _server,
-                hintText: labels.required,
-              ),
-            ),
-            FormRow(
-              title: labels.port,
-              trailing: FormRowTextField(
-                controller: _port,
-                keyboardType: TextInputType.number,
-                hintText: labels.required,
-              ),
-            ),
-            FormRow(
-              title: labels.username,
-              trailing: FormRowTextField(
-                controller: _username,
-                hintText: labels.required,
-              ),
-            ),
-            FormRow(
-              title: labels.password,
+              title: labels.managedIspConnection,
               trailing: FormRowSecretTextField(
-                controller: _password,
-                hintText: labels.required,
+                controller: _connection,
+                hintText: 'socks5://user:password@host:port',
               ),
             ),
             FormRow(
@@ -123,6 +95,17 @@ class _ManagedIspFormState extends ConsumerState<ManagedIspForm> {
               trailing: FormRowTextField(
                 controller: _exitIp,
                 hintText: labels.optional,
+              ),
+            ),
+          ],
+        ),
+        generateSection(
+          items: [
+            FormRow(
+              title: labels.managedIspEnvironment,
+              onPressed: () => showFormSheet<void>(
+                context: context,
+                builder: (_) => const ManagedIspDiagnostics(),
               ),
             ),
           ],

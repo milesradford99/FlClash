@@ -10,7 +10,10 @@ class ProfilesAction extends _$ProfilesAction {
   final _managedWork = SerialTaskScheduler();
   static const _protection = ManagedIspPlatform();
 
-  Future<void> createManagedIsp(ManagedIspProfile input) {
+  bool _isManagedRunning(int id) =>
+      ref.read(isStartProvider) && ref.read(currentProfileIdProvider) == id;
+
+  Future<int> createManagedIsp(ManagedIspProfile input) {
     return _managedWork.run(() async {
       if (!system.isMacOS || ref.read(safeModeProvider)) {
         throw StateError('Managed ISP is unavailable in this build.');
@@ -32,7 +35,8 @@ class ProfilesAction extends _$ProfilesAction {
           .where((item) => managedIspSourceId(item.url) == source.id)
           .firstOrNull;
       if (existing != null &&
-          await _protection.protectedProfile == existing.id) {
+          (await _protection.protectedProfile == existing.id ||
+              _isManagedRunning(existing.id))) {
         throw StateError(
           'Switch to the VPN subscription to update ISP credentials.',
         );
@@ -40,7 +44,9 @@ class ProfilesAction extends _$ProfilesAction {
       final managed =
           existing ??
           Profile.normal(
-            label: currentAppLocalizations.managedIspMode,
+            label: managedIspSystemProtection
+                ? currentAppLocalizations.managedIspMode
+                : currentAppLocalizations.managedIspLocalMode,
           ).copyWith(url: managedIspUrl(source.id), autoUpdate: false);
 
       final staged = await _downloadManagedSource(source);
@@ -53,8 +59,8 @@ class ProfilesAction extends _$ProfilesAction {
           raw,
           pins,
           tun: managedIspTun,
-          mixedPort: 7890,
-          enableTun: true,
+          mixedPort: managedIspLocalPort,
+          enableTun: managedIspSystemProtection,
         );
         final marker = await managed.file;
         await marker.writeAsStringAtomically('rules: [ "MATCH,REJECT" ]\n');
@@ -97,6 +103,7 @@ class ProfilesAction extends _$ProfilesAction {
         if (ref.read(currentProfileIdProvider) == null) {
           ref.read(currentProfileIdProvider.notifier).value = newSource.id;
         }
+        return newManaged.id;
       } catch (_) {
         if (existing == null && stored) await _protection.remove(managed.id);
         rethrow;
@@ -138,7 +145,9 @@ class ProfilesAction extends _$ProfilesAction {
     int maxBytes = 65536,
     String? accept,
   }) async {
-    final port = ref.read(patchClashConfigProvider).mixedPort;
+    final port = managedIspSystemProtection
+        ? ref.read(patchClashConfigProvider).mixedPort
+        : managedIspLocalPort;
     if (protected && !isUsableMixedPort(port)) {
       throw StateError('The protected connection is unavailable.');
     }
@@ -210,10 +219,10 @@ class ProfilesAction extends _$ProfilesAction {
   }
 
   Future<String> verifyManagedIsp(Profile profile) async {
-    if (await _protection.protectedProfile != profile.id ||
-        !ref.read(isStartProvider) ||
-        ref.read(currentProfileIdProvider) != profile.id) {
-      throw StateError('The protected profile is not running.');
+    if (!_isManagedRunning(profile.id) ||
+        managedIspSystemProtection &&
+            await _protection.protectedProfile != profile.id) {
+      throw StateError('The fixed ISP profile is not running.');
     }
     final (bytes, _) = await _readManagedEndpoint(
       Uri.parse(managedIspHealthCheck),
@@ -228,6 +237,9 @@ class ProfilesAction extends _$ProfilesAction {
       throw StateError('The fixed exit could not be checked.');
     }
     final expected = (await _protection.load(profile.id))?['expectedIp'];
+    if (!_isManagedRunning(profile.id)) {
+      throw StateError('The fixed ISP profile is no longer running.');
+    }
     if (expected is String &&
         InternetAddress.tryParse(expected) !=
             InternetAddress.tryParse(address)) {
@@ -257,7 +269,10 @@ class ProfilesAction extends _$ProfilesAction {
         ref.read(currentProfileIdProvider.notifier).value = id;
         return;
       }
-      if (managed != null && !await _protection.available) {
+      if (managed != null &&
+          (!system.isMacOS ||
+              ref.read(safeModeProvider) ||
+              managedIspSystemProtection && !await _protection.available)) {
         throw StateError(currentAppLocalizations.managedIspUnavailable);
       }
       final setup = ref.read(setupActionProvider.notifier);
@@ -276,7 +291,11 @@ class ProfilesAction extends _$ProfilesAction {
       if (managed != null) {
         final started = await setup.setRunning(true, initialize: true);
         if (!started) {
-          throw StateError(currentAppLocalizations.managedIspBlocked);
+          throw StateError(
+            managedIspSystemProtection
+                ? currentAppLocalizations.managedIspBlocked
+                : currentAppLocalizations.managedIspLocalFailed,
+          );
         }
       } else {
         await setup.setRunning(true, initialize: true);
@@ -296,6 +315,9 @@ class ProfilesAction extends _$ProfilesAction {
       if (active != null && active != managed.id) {
         throw StateError('Another fixed ISP profile is protected.');
       }
+      final viaIsp =
+          active != null ||
+          !managedIspSystemProtection && _isManagedRunning(managed.id);
       final rawStorage = await _protection.load(managed.id);
       if (rawStorage == null) {
         throw StateError('Fixed ISP credentials are missing.');
@@ -304,10 +326,7 @@ class ProfilesAction extends _$ProfilesAction {
         Uri.parse(source.url),
         rawStorage,
       );
-      final staged = await _downloadManagedSource(
-        source,
-        protected: active != null,
-      );
+      final staged = await _downloadManagedSource(source, protected: viaIsp);
       final file = await staged.file;
       try {
         final raw = await _core.readConfig(staged.id);
@@ -316,14 +335,14 @@ class ProfilesAction extends _$ProfilesAction {
         final pins = await input.resolve(
           raw,
           previous: previous,
-          resolver: active != null ? _resolveThroughManagedIsp : null,
+          resolver: viaIsp ? _resolveThroughManagedIsp : null,
         );
         input.protectedConfig(
           raw,
           pins,
           tun: managedIspTun,
-          mixedPort: 7890,
-          enableTun: true,
+          mixedPort: managedIspLocalPort,
+          enableTun: managedIspSystemProtection,
         );
         final latest = ref.read(profilesProvider).getProfile(source.id);
         if (latest == null ||

@@ -168,7 +168,7 @@ class Bootstrap {
       unawaited(window?.hide());
     }
     await _handleFailedPreference();
-    if (!await _handlerDisclaimer()) {
+    if (!system.isMacOS && !await _handlerDisclaimer()) {
       return;
     }
     await _showCrashRecoveryTip();

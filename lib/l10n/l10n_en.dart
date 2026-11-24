@@ -3974,8 +3974,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get managedIspExpected => 'Expected exit IP';
 
   @override
+  String get managedIspConnection => 'SOCKS5 connection URL';
+
+  @override
+  String get managedIspLocalMode => 'VPN → ISP (local proxy)';
+
+  @override
+  String get managedIspLocalFailed =>
+      'Could not start the local ISP proxy. Check the VPN connection and whether port 17890 is in use.';
+
+  @override
   String get managedIspInvalid =>
-      'Enter a valid HTTPS subscription, SOCKS5 server and credentials.';
+      'Enter an HTTPS subscription and a valid SOCKS5 connection URL.';
 
   @override
   String get managedIspSaveFailed =>
@@ -4001,6 +4011,120 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get managedIspWaiting => 'Waiting for fixed exit';
+
+  @override
+  String get ispDiagOpenIspChrome => 'Open Chrome with fixed ISP';
+
+  @override
+  String get ispDiagChromeIsolation =>
+      'The first launch creates a separate Chrome workspace that is reused next time.';
+
+  @override
+  String get ispDiagChromeAvailable => 'Installed';
+
+  @override
+  String get ispDiagChromeLaunchFailed =>
+      'Could not open Chrome with the fixed ISP. Check that Chrome is installed and try again.';
+
+  @override
+  String get ispDiagNoIspProfile =>
+      'Save an ISP profile first. If you have more than one, open this from its profile card.';
+
+  @override
+  String get ispDiagWebRtcPending => 'Awaiting confirmation in macOS';
+
+  @override
+  String get ispDiagWebRtcManagedNote =>
+      'If your organization manages Chrome, check its existing policies first.';
+
+  @override
+  String get ispDiagWebRtcUnset => 'System policy not set';
+
+  @override
+  String get ispDiagTimeZone => 'Time zone';
+
+  @override
+  String get ispDiagAdvanced => 'Advanced diagnostics';
+
+  @override
+  String get ispDiagDetect => 'Detect now';
+
+  @override
+  String get ispDiagConfigure => 'Configure…';
+
+  @override
+  String get ispDiagReview => 'Review changes';
+
+  @override
+  String get ispDiagRepair =>
+      'Reapply the fixed ISP profile through FlClash. This may briefly interrupt its connections.';
+
+  @override
+  String get ispDiagInstall =>
+      'Open the macOS installer for a WebRTC policy that applies to every Chrome profile on this Mac.';
+
+  @override
+  String get ispDiagConfirmProfile =>
+      'I verified Profile Path in chrome://version';
+
+  @override
+  String get ispDiagMissingProfile =>
+      'Select or create a Chrome profile, then confirm its directory in chrome://version.';
+
+  @override
+  String get ispDiagPolicyConflict =>
+      'A different managed WebRTC policy is present. Resolve it with your administrator before applying a change.';
+
+  @override
+  String get ispDiagPolicyReview =>
+      'Reload chrome://policy in the selected profile to verify the value, source, scope, level and status.';
+
+  @override
+  String get ispDiagBrowserProbe => 'Open Chrome probe';
+
+  @override
+  String get ispDiagProbeUrl => 'Authorized HTTPS endpoint';
+
+  @override
+  String get ispDiagProbeImport => 'Paste browser probe result';
+
+  @override
+  String get ispDiagProbeApprove =>
+      'Run authorized network probe? HTTPS uses the selected FlClash route. Protected mode also attempts system DNS resolution.';
+
+  @override
+  String get ispDiagProbeEvidence => 'Import browser evidence';
+
+  @override
+  String get ispDiagBrowserBehavior => 'Behavior test';
+
+  @override
+  String get ispDiagBrowserExternal =>
+      'Require a control run and external evidence to verify DNS egress or WebRTC bypass.';
+
+  @override
+  String get ispDiagResolver => 'macOS resolvers';
+
+  @override
+  String get ispDiagCoreRoute => 'Core routes and DNS';
+
+  @override
+  String get ispDiagSystemProtection => 'TUN and system filter';
+
+  @override
+  String get ispDiagPassed => 'Passed';
+
+  @override
+  String get ispDiagFailed => 'Failed';
+
+  @override
+  String get ispDiagUnverified => 'Unverified';
+
+  @override
+  String get ispDiagAction => 'Action required';
+
+  @override
+  String get ispDiagNotApplicable => 'Not applicable';
 
   @override
   String get managedIspEnvironment => 'macOS and Chrome';

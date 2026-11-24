@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 const managedIspTun = 'utun223';
+const managedIspLocalPort = 17890;
+const managedIspLocalAddress = '127.0.0.1:$managedIspLocalPort';
 const managedIspSystemProtection = bool.fromEnvironment(
   'MANAGED_ISP_PROTECTION',
 );
@@ -54,6 +56,21 @@ class ManagedIspPlatform {
 
   Future<Map<String, dynamic>?> environment() =>
       _channel.invokeMapMethod<String, dynamic>('environment');
+
+  Future<void> environmentShortcut(String kind, {String? directory}) =>
+      _channel.invokeMethod<void>('environmentShortcut', {
+        'kind': kind,
+        'directory': ?directory,
+      });
+
+  Future<void> openIspChrome() =>
+      _channel.invokeMethod<void>('openIspChrome', managedIspLocalPort);
+
+  Future<void> openBrowserProbe(String html, String directory) =>
+      _channel.invokeMethod<void>('openBrowserProbe', {
+        'html': html,
+        'directory': directory,
+      });
 
   Future<void> openChromeProfile() =>
       _channel.invokeMethod<void>('openChromeProfile');

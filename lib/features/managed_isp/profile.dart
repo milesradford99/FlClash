@@ -71,6 +71,31 @@ class ManagedIspProfile {
     }
   }
 
+  factory ManagedIspProfile.fromConnectionString({
+    required Uri subscription,
+    required String connectionString,
+    String? expectedIp,
+  }) {
+    final uri = Uri.parse(connectionString.trim());
+    final separator = uri.userInfo.indexOf(':');
+    if (uri.scheme != 'socks5' ||
+        !uri.hasPort ||
+        uri.hasQuery ||
+        uri.hasFragment ||
+        (uri.path.isNotEmpty && uri.path != '/') ||
+        separator < 0) {
+      throw const FormatException('Expected a SOCKS5 connection URL.');
+    }
+    return ManagedIspProfile(
+      subscription: subscription,
+      ispHost: uri.host,
+      ispPort: uri.port,
+      username: Uri.decodeComponent(uri.userInfo.substring(0, separator)),
+      password: Uri.decodeComponent(uri.userInfo.substring(separator + 1)),
+      expectedIp: expectedIp,
+    );
+  }
+
   factory ManagedIspProfile.fromStorage(
     Uri subscription,
     Map<String, dynamic> data,
@@ -213,16 +238,18 @@ class ManagedIspProfile {
         'ipv6': false,
         'hosts': hosts,
         'profile': {'store-selected': false},
-        'tun': {
-          'enable': enableTun,
-          'device': tun,
-          'stack': 'mixed',
-          'auto-route': true,
-          'auto-detect-interface': true,
-          'strict-route': true,
-          'dns-mode': 'native',
-          'dns-hijack': ['any:53', 'tcp://any:53'],
-        },
+        'tun': enableTun
+            ? {
+                'enable': true,
+                'device': tun,
+                'stack': 'mixed',
+                'auto-route': true,
+                'auto-detect-interface': true,
+                'strict-route': true,
+                'dns-mode': 'native',
+                'dns-hijack': ['any:53', 'tcp://any:53'],
+              }
+            : {'enable': false},
         'dns': {
           'enable': true,
           'ipv6': false,

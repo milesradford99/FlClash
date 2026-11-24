@@ -147,6 +147,10 @@ abstract class CoreHandlerInterface {
     return _query(CoreMethod.configRead, _json, arguments: {'path': path});
   }
 
+  Future<Map<String, dynamic>> getIspStatus() {
+    return _query(CoreMethod.configIspStatus, _json);
+  }
+
   Future<ProfileBase> getProfileBase(String path) {
     return _query(
       CoreMethod.profileBase,
@@ -343,6 +347,11 @@ abstract class CoreHandlerInterface {
   Future<void> stopLog() => _commandUnobserved(CoreMethod.logStop);
 
   Future<void> startListener() => _command(CoreMethod.listenerStart);
+
+  Future<void> startMixedListener(int port) => _command(
+    CoreMethod.listenerStart,
+    arguments: {'requiredMixedPort': port},
+  );
 
   Future<void> stopListener() => _command(CoreMethod.listenerStop);
 

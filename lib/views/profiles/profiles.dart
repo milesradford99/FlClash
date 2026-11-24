@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'add.dart';
 import 'edit.dart';
+import 'managed_isp_diagnostics.dart';
 import 'preview.dart';
 
 const _infoGap = 4.0;
@@ -385,12 +386,15 @@ class ProfileItem extends ConsumerWidget {
       valueListenable: managedIspExit,
       builder: (context, output, child) {
         final ip = output?.profileId == profile.id ? output?.ip : null;
+        final status = isSelected
+            ? ip ?? labels.managedIspWaiting
+            : labels.managedIspCheck;
         return _ProfileCardTitle(
           profile: profile,
           expire: null,
-          subtitle: isSelected
-              ? ip ?? labels.managedIspWaiting
-              : labels.managedIspCheck,
+          subtitle: managedIspSystemProtection
+              ? status
+              : '$managedIspLocalAddress · $status',
         );
       },
     );
@@ -459,32 +463,6 @@ class ProfileItem extends ConsumerWidget {
     }
   }
 
-  Future<void> _checkManagedEnvironment(BuildContext context) async {
-    const native = ManagedIspPlatform();
-    final result = await globalState.safeRun(native.environment);
-    if (!context.mounted || result == null) return;
-    final labels = context.appLocalizations;
-    final installed = result['chromeInstalled'] == true;
-    final managed = result['webRtcManaged'] == true;
-    final chrome = installed
-        ? managed
-              ? labels.managedIspChromeManaged
-              : labels.managedIspChromeMissing
-        : labels.managedIspChromeAbsent;
-    final confirmed = await dialogs.showMessage(
-      title: labels.managedIspEnvironment,
-      message: TextSpan(
-        text: '${result['locale']} · ${result['timeZone']}\n\n$chrome',
-      ),
-      confirmText: installed && !managed
-          ? labels.managedIspChromeInstall
-          : null,
-    );
-    if (confirmed == true && installed && !managed) {
-      await globalState.safeRun(native.openChromeProfile);
-    }
-  }
-
   List<PopupMenuItem> _menuItems(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     final isUrl = profile.type == ProfileType.url;
@@ -515,7 +493,10 @@ class ProfileItem extends ConsumerWidget {
           PopupMenuItem(
             glyph: AppGlyphs.devices,
             label: appLocalizations.managedIspEnvironment,
-            onPressed: () => _checkManagedEnvironment(context),
+            onPressed: () => showFormSheet<void>(
+              context: context,
+              builder: (_) => ManagedIspDiagnostics(profileId: profile.id),
+            ),
           ),
         PopupMenuItem(
           danger: true,
@@ -619,6 +600,7 @@ class ProfileItem extends ConsumerWidget {
     final isUpdating = ref.watch(isUpdatingProvider(profile.updatingKey));
     final subscriptionInfo = _subscriptionInfo;
     final isSelected = profile.id == groupValue;
+    final isManaged = managedIspSourceId(profile.url) != null;
     return ContextMenuRegion(
       menuItems: isUpdating ? null : _menuItems(context, ref),
       child: Card(
@@ -640,10 +622,22 @@ class ProfileItem extends ConsumerWidget {
                 _GroupsCountChip(profileId: profile.id)
               else
                 _buildTrailing(context, isUpdating: isUpdating),
+              if (isManaged && system.isMacOS && !ref.watch(safeModeProvider))
+                IconButton(
+                  tooltip: context.appLocalizations.managedIspEnvironment,
+                  icon: const GlyphIcon(AppGlyphs.devices),
+                  onPressed: isUpdating
+                      ? null
+                      : () => showFormSheet<void>(
+                          context: context,
+                          builder: (_) =>
+                              ManagedIspDiagnostics(profileId: profile.id),
+                        ),
+                ),
               if (isSelected) const SelectionBadge(size: 24),
             ],
           ),
-          title: managedIspSourceId(profile.url) != null
+          title: isManaged
               ? _buildManagedSubtitle(context, isSelected)
               : _ProfileCardTitle(
                   profile: profile,

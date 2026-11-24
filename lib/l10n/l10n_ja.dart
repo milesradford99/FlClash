@@ -3794,7 +3794,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get managedIspExpected => '想定出口IP';
 
   @override
-  String get managedIspInvalid => 'HTTPS購読、SOCKS5サーバーと認証情報を確認してください。';
+  String get managedIspConnection => 'SOCKS5 接続 URL';
+
+  @override
+  String get managedIspLocalMode => 'VPN → ISP（ローカルプロキシ）';
+
+  @override
+  String get managedIspLocalFailed =>
+      'ローカル ISP プロキシを開始できません。VPN 接続とポート 17890 の使用状況を確認してください。';
+
+  @override
+  String get managedIspInvalid =>
+      'HTTPS サブスクリプションと有効な SOCKS5 接続 URL を入力してください。';
 
   @override
   String get managedIspSaveFailed => '設定を作成できません。購読を確認してください。';
@@ -3816,6 +3827,115 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get managedIspWaiting => '固定出口を待機中';
+
+  @override
+  String get ispDiagOpenIspChrome => '固定 ISP で Chrome を開く';
+
+  @override
+  String get ispDiagChromeIsolation => '初回起動時に専用の Chrome 環境を作成し、次回も再利用します。';
+
+  @override
+  String get ispDiagChromeAvailable => 'インストール済み';
+
+  @override
+  String get ispDiagChromeLaunchFailed =>
+      'Chrome を開けません。Chrome がインストールされていることを確認してください。';
+
+  @override
+  String get ispDiagNoIspProfile =>
+      '固定 ISP プロファイルを保存してください。複数ある場合は対応するカードから開いてください。';
+
+  @override
+  String get ispDiagWebRtcPending => 'macOS での確認待ち';
+
+  @override
+  String get ispDiagWebRtcManagedNote =>
+      '組織が Chrome を管理している場合は、既存のポリシーを先に確認してください。';
+
+  @override
+  String get ispDiagWebRtcUnset => 'システムポリシー未設定';
+
+  @override
+  String get ispDiagTimeZone => 'タイムゾーン';
+
+  @override
+  String get ispDiagAdvanced => '詳細診断';
+
+  @override
+  String get ispDiagDetect => '今すぐ検出';
+
+  @override
+  String get ispDiagConfigure => '設定…';
+
+  @override
+  String get ispDiagReview => '変更を確認';
+
+  @override
+  String get ispDiagRepair => '固定 ISP プロファイルを再適用します。接続が一時的に切断される場合があります。';
+
+  @override
+  String get ispDiagInstall =>
+      'この Mac のすべての Chrome プロファイルに適用される WebRTC ポリシーのインストーラを開きます。';
+
+  @override
+  String get ispDiagConfirmProfile => 'chrome://version でプロファイルを確認済み';
+
+  @override
+  String get ispDiagMissingProfile =>
+      'プロファイルを選択または作成し、chrome://version でディレクトリを確認してください。';
+
+  @override
+  String get ispDiagPolicyConflict => '異なる管理対象 WebRTC ポリシーがあります。管理者に確認してください。';
+
+  @override
+  String get ispDiagPolicyReview =>
+      'chrome://policy を再読み込みし、値、ソース、範囲、レベル、状態を確認してください。';
+
+  @override
+  String get ispDiagBrowserProbe => 'Chrome のテストを開く';
+
+  @override
+  String get ispDiagProbeUrl => '許可済み HTTPS URL';
+
+  @override
+  String get ispDiagProbeImport => 'ブラウザーの結果を貼り付け';
+
+  @override
+  String get ispDiagProbeApprove =>
+      '許可済みのテストを実行しますか？HTTPS は現在の経路を使用し、全体保護ではシステム DNS も検査します。';
+
+  @override
+  String get ispDiagProbeEvidence => '証拠を取り込む';
+
+  @override
+  String get ispDiagBrowserBehavior => '動作テスト';
+
+  @override
+  String get ispDiagBrowserExternal => 'DNS 出口と WebRTC の検証には、対照テストと外部証拠が必要です。';
+
+  @override
+  String get ispDiagResolver => 'macOS リゾルバ';
+
+  @override
+  String get ispDiagCoreRoute => 'コアのルールと DNS';
+
+  @override
+  String get ispDiagSystemProtection => 'TUN とシステムフィルタ';
+
+  @override
+  String get ispDiagPassed => '合格';
+
+  @override
+  String get ispDiagFailed => '失敗';
+
+  @override
+  String get ispDiagUnverified => '未確認';
+
+  @override
+  String get ispDiagAction => '操作が必要';
+
+  @override
+  String get ispDiagNotApplicable => '対象外';
 
   @override
   String get managedIspEnvironment => 'macOSとChromeを確認';

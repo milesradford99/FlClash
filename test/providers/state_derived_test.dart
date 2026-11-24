@@ -5,6 +5,8 @@ import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/mitm_network.dart';
 import 'package:fl_clash/common/system.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/managed_isp/platform.dart';
+import 'package:fl_clash/features/managed_isp/profile.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -552,6 +554,34 @@ void main() {
     expect(container.read(suspendProvider), isTrue);
     expect(container.read(proxyStateProvider).isStart, isFalse);
   });
+
+  test(
+    'local ISP selection suppresses the system proxy only while selected',
+    () {
+      final source = Profile.normal(
+        url: 'https://subscription.example.test/',
+      ).copyWith(id: 901);
+      final local = Profile.normal(
+        url: managedIspUrl(source.id),
+      ).copyWith(id: 902);
+      final profiles = container.read(profilesProvider.notifier);
+      profiles.put(source);
+      profiles.put(local);
+      container
+          .read(networkSettingProvider.notifier)
+          .update((settings) => settings.copyWith(systemProxy: true));
+      final selection = container.read(currentProfileIdProvider.notifier);
+
+      selection.value = source.id;
+      expect(container.read(proxyStateProvider).systemProxy, isTrue);
+      selection.value = local.id;
+      expect(container.read(proxyStateProvider).systemProxy, isFalse);
+      expect(container.read(networkSettingProvider).systemProxy, isTrue);
+      selection.value = source.id;
+      expect(container.read(proxyStateProvider).systemProxy, isTrue);
+    },
+    skip: !system.isMacOS || managedIspSystemProtection,
+  );
 
   test('safe mode keeps every host integration off', () async {
     loadAppLocalizations(const Locale('en'));

@@ -11,6 +11,7 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'managed_isp_diagnostics.dart';
 import 'managed_isp_form.dart';
 
 /// The ways to add a profile, in a menu out of the control [builder] makes.
@@ -126,6 +127,18 @@ class AddProfileMenu extends ConsumerWidget {
     );
   }
 
+  Future<void> _toManagedIsp(BuildContext context) async {
+    final id = await showFormSheet<int>(
+      context: context,
+      builder: (_) => const ManagedIspForm(),
+    );
+    if (id == null || !context.mounted) return;
+    await showFormSheet<void>(
+      context: context,
+      builder: (_) => ManagedIspDiagnostics(profileId: id),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
@@ -137,10 +150,7 @@ class AddProfileMenu extends ConsumerWidget {
             PopupMenuItem(
               glyph: AppGlyphs.customize,
               label: appLocalizations.managedIspSetup,
-              onPressed: () => showFormSheet<void>(
-                context: context,
-                builder: (_) => const ManagedIspForm(),
-              ),
+              onPressed: () => _toManagedIsp(context),
             ),
           PopupMenuItem(
             glyph: AppGlyphs.qrCode,
