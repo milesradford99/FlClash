@@ -3,6 +3,9 @@ import 'dart:io';
 
 const _ispGroup = 'Managed ISP';
 const _scheme = 'flclash-isp';
+const sharedIspVpnGroup = 'FlClash Shared VPN';
+const sharedIspInbound = '__flclash_chrome_isp__';
+const sharedIspOutbound = '__flclash_isp_exit__';
 
 int? managedIspSourceId(String url) {
   final uri = Uri.tryParse(url);
@@ -263,6 +266,135 @@ class ManagedIspProfile {
       },
       endpoints: endpoints.toList()..sort(),
     );
+  }
+
+  /// Preserves subscription route targets while sharing the inline VPN leaves.
+  Map<String, dynamic> sharedConfig(
+    Map<String, dynamic> source, {
+    required int port,
+  }) {
+    final proxies = _entries(source['proxies']);
+    final groups = _entries(source['proxy-groups']);
+    final listeners = _entries(source['listeners']);
+    final names = <Object?>{
+      for (final item in [...proxies, ...groups, ...listeners]) item['name'],
+    };
+    if (names.intersection({
+          sharedIspVpnGroup,
+          sharedIspInbound,
+          sharedIspOutbound,
+        }).isNotEmpty ||
+        listeners.any((listener) => listener['port'].toString() == '$port')) {
+      throw const FormatException(
+        'The profile uses a reserved ISP listener or name.',
+      );
+    }
+    final vpn = <String, String>{};
+    for (final proxy in proxies.where(_eligible)) {
+      final name = proxy['name'] as String;
+      var runtimeName = 'VPN / $name';
+      while (!names.add(runtimeName)) {
+        runtimeName = 'VPN / $runtimeName';
+      }
+      vpn[name] = runtimeName;
+    }
+    if (vpn.isEmpty) {
+      throw const FormatException(
+        'The subscription needs supported inline VPN nodes.',
+      );
+    }
+
+    return {
+      ...source,
+      'proxies': [
+        for (final proxy in proxies)
+          if (vpn[proxy['name']] case final String name)
+            {...proxy, 'name': name}
+          else
+            proxy,
+        {
+          'name': sharedIspOutbound,
+          'type': 'socks5',
+          'server': _host,
+          'port': ispPort,
+          'username': _username,
+          'password': _password,
+          'udp': false,
+          'dialer-proxy': sharedIspVpnGroup,
+        },
+      ],
+      'proxy-groups': [
+        {
+          'name': sharedIspVpnGroup,
+          'type': 'select',
+          'proxies': vpn.values.toList(),
+          'empty-fallback': 'REJECT',
+        },
+        for (final group in groups) _preserveGroup(group, proxies, vpn),
+        for (final name in vpn.keys)
+          {
+            'name': name,
+            'type': 'select',
+            'hidden': true,
+            'proxies': [sharedIspVpnGroup],
+          },
+      ],
+      'listeners': [
+        ...listeners,
+        {
+          'name': sharedIspInbound,
+          'type': 'mixed',
+          'listen': '127.0.0.1',
+          'port': port,
+          'udp': false,
+          'proxy': sharedIspOutbound,
+          'users': [],
+        },
+      ],
+    };
+  }
+
+  static List<Map<String, dynamic>> _entries(Object? value) => value is List
+      ? value.whereType<Map<String, dynamic>>().toList()
+      : const [];
+
+  static Map<String, dynamic> _preserveGroup(
+    Map<String, dynamic> group,
+    List<Map<String, dynamic>> proxies,
+    Map<String, String> vpn,
+  ) {
+    final fallback = vpn[group['empty-fallback']];
+    final includeAll = group['include-all'] == true;
+    if (!includeAll && group['include-all-proxies'] != true) {
+      return fallback == null ? group : {...group, 'empty-fallback': fallback};
+    }
+    final filters = (group['filter'] as String? ?? '')
+        .split('`')
+        .where((filter) => filter.isNotEmpty)
+        .map(RegExp.new)
+        .toList();
+    final members = {
+      if (group['proxies'] case final List items) ...items.whereType<String>(),
+      for (final proxy in proxies)
+        if (proxy['name'] case final String name
+            when filters.isEmpty ||
+                filters.any((filter) => filter.hasMatch(name)))
+          name,
+    };
+    return {
+      ...group,
+      'include-all': false,
+      'include-all-proxies': false,
+      if (includeAll) 'include-all-providers': true,
+      'proxies':
+          members.isEmpty &&
+              group['use'] == null &&
+              !includeAll &&
+              group['include-all-providers'] != true
+          ? [group['empty-fallback'] ?? 'COMPATIBLE']
+          : members.toList(),
+      'empty-fallback': ?(fallback ?? group['empty-fallback']),
+    };
   }
 
   static bool _validCredential(String value) =>

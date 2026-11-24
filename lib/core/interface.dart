@@ -151,6 +151,16 @@ abstract class CoreHandlerInterface {
     return _query(CoreMethod.configIspStatus, _json);
   }
 
+  Future<void> configureIspMonitor(int intervalSeconds, {String? expectedIp}) {
+    return _command(
+      CoreMethod.configIspMonitor,
+      arguments: {
+        'interval-seconds': intervalSeconds,
+        'expected-ip': ?expectedIp,
+      },
+    );
+  }
+
   Future<ProfileBase> getProfileBase(String path) {
     return _query(
       CoreMethod.profileBase,

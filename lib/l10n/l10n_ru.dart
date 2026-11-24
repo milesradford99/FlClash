@@ -1936,6 +1936,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось получить права для TUN, поэтому он выключен.';
 
   @override
+  String get tunCorePermissionFailed =>
+      'macOS не удалось настроить права Core. Если FlClash ISP открыт из папки «Документы» или «Загрузки», перенесите приложение в папку «Программы» и повторите попытку.';
+
+  @override
+  String get tunStartFailed =>
+      'Core не удалось запустить TUN. Отключите TUN в других VPN-приложениях и повторите попытку. Если проблема сохранится, проверьте журналы.';
+
+  @override
   String get sudoPasswordTitle => 'Введите пароль для sudo';
 
   @override
@@ -3971,7 +3979,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get managedIspConnection => 'URL подключения SOCKS5';
 
   @override
-  String get managedIspLocalMode => 'VPN → ISP (локальный прокси)';
+  String get managedIspLocalMode => 'TUN и фиксированный ISP для Chrome';
+
+  @override
+  String get managedIspSharedNode => 'Общий узел VPN';
 
   @override
   String get managedIspLocalFailed =>
@@ -4011,8 +4022,68 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ispDiagOpenIspChrome => 'Открыть Chrome через фиксированный ISP';
 
   @override
+  String get ispDiagNewChromeSpace => 'Создать пространство';
+
+  @override
+  String get ispAppsTitle => 'Выбранные приложения';
+
+  @override
+  String get ispMonitorSettings => 'Настройки проверки подключения';
+
+  @override
+  String get ispMonitorPeriodic => 'Периодически проверять текущее подключение';
+
+  @override
+  String get ispMonitorInterval => 'Интервал проверки (секунды)';
+
+  @override
+  String get ispMonitorHint =>
+      'Периодическая проверка выполняется при наличии трафика ISP. При сбое проверяются резервные узлы.';
+
+  @override
+  String get ispMonitorChecking => 'Проверка подключения ISP';
+
+  @override
+  String get ispMonitorDown =>
+      'Фиксированный ISP недоступен. Ожидание повторной попытки.';
+
+  @override
+  String get ispMonitorInvalidInterval =>
+      'Введите интервал от 1 до 86400 секунд.';
+
+  @override
+  String get ispAppsAdd => 'Добавить приложение';
+
+  @override
+  String get ispAppsStart => 'Подключить фиксированный ISP';
+
+  @override
+  String get ispAppsWaiting => 'Ожидание подключения';
+
+  @override
+  String get ispAppsMatched => 'Используется фиксированный ISP';
+
+  @override
+  String get ispAppsNeedsTun => 'Ожидание TUN';
+
+  @override
+  String get ispAppsHint =>
+      'Правила действуют для новых соединений. Добавляйте внешние программы отдельно.';
+
+  @override
+  String get ispAppsFailed =>
+      'Не удалось обновить список. Выберите приложение или исполняемый файл либо повторите попытку.';
+
+  @override
+  String get ispDiagOpenChromeSpace => 'Открыть';
+
+  @override
+  String get ispDiagDuplicateChromeSpace =>
+      'Пространство с таким именем уже есть.';
+
+  @override
   String get ispDiagChromeIsolation =>
-      'При первом запуске создаётся отдельное пространство Chrome, которое используется повторно.';
+      'У каждого пространства свои вкладки, входы и файлы cookie. Все используют текущего фиксированного интернет-провайдера.';
 
   @override
   String get ispDiagChromeAvailable => 'Установлен';

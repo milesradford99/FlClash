@@ -1833,6 +1833,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tunAuthorizationFailed => '虚拟网卡授权失败，已关闭。';
 
   @override
+  String get tunCorePermissionFailed =>
+      'macOS 未能设置 Core 权限。若从「文稿」或「下载」打开了 FlClash ISP，请将这个 App 移到「应用程序」后重试。';
+
+  @override
+  String get tunStartFailed => '虚拟网卡启动失败。请关闭其他 VPN 软件的 TUN 后重试，若仍失败可查看日志。';
+
+  @override
   String get sudoPasswordTitle => '输入 sudo 密码';
 
   @override
@@ -3748,7 +3755,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get managedIspConnection => 'SOCKS5 连接串';
 
   @override
-  String get managedIspLocalMode => 'VPN → ISP（本机代理）';
+  String get managedIspLocalMode => 'TUN + Chrome 固定 ISP';
+
+  @override
+  String get managedIspSharedNode => '共享 VPN 节点';
 
   @override
   String get managedIspLocalFailed =>
@@ -3782,7 +3792,61 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ispDiagOpenIspChrome => '用固定 ISP 打开 Chrome';
 
   @override
-  String get ispDiagChromeIsolation => '首次打开会创建独立的 Chrome 浏览空间，以后会继续用这个空间。';
+  String get ispDiagNewChromeSpace => '新建空间';
+
+  @override
+  String get ispAppsTitle => '指定应用';
+
+  @override
+  String get ispMonitorSettings => '链路检查设置';
+
+  @override
+  String get ispMonitorPeriodic => '定时检查当前链路';
+
+  @override
+  String get ispMonitorInterval => '检查间隔（秒）';
+
+  @override
+  String get ispMonitorHint => '有 ISP 流量时按间隔检查。连接失败时会按需探测备用节点。';
+
+  @override
+  String get ispMonitorChecking => '正在检查 ISP 链路';
+
+  @override
+  String get ispMonitorDown => '固定 ISP 暂不可用，已进入重试冷却';
+
+  @override
+  String get ispMonitorInvalidInterval => '请输入 1 至 86400 秒。';
+
+  @override
+  String get ispAppsAdd => '添加应用';
+
+  @override
+  String get ispAppsStart => '启动固定 ISP';
+
+  @override
+  String get ispAppsWaiting => '等待应用连接';
+
+  @override
+  String get ispAppsMatched => '已命中固定 ISP';
+
+  @override
+  String get ispAppsNeedsTun => '等待启动 TUN';
+
+  @override
+  String get ispAppsHint => '规则对新连接生效。外部程序需单独添加。';
+
+  @override
+  String get ispAppsFailed => '无法更新指定应用。请选择 App 或可执行文件，或重试。';
+
+  @override
+  String get ispDiagOpenChromeSpace => '打开';
+
+  @override
+  String get ispDiagDuplicateChromeSpace => '已有同名空间。';
+
+  @override
+  String get ispDiagChromeIsolation => '各空间分别保存标签页、登录和 Cookie，共用当前固定 ISP。';
 
   @override
   String get ispDiagChromeAvailable => '已安装';

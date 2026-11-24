@@ -21,7 +21,19 @@ tool/package_managed_macos.sh TEAM_ID 'Developer ID Application: Your Name (TEAM
 
 脚本构建应用、嵌入 Network Extension、用对应描述文件签名，并在 `dist/flclash-isp.*/` 输出 `FlClash-ISP-macOS.zip` 与 SHA-256。可在构建机上预先配置 `notarytool` 的钥匙串记录，并通过环境变量 `MANAGED_NOTARY_PROFILE` 指定记录名称。脚本会提交公证、装订票据并重新打包。凭据和 provisioning profile 仅留在构建机。 [Apple Network Extensions 签名要求](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.networking.networkextension) · [Apple 直接分发公证](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution)
 
-普通 `flutter build macos` 构建「VPN → ISP（本机代理）」。在向导中粘贴 HTTPS 订阅和 `socks5://user:password@host:port`，保存后选中本机代理配置。需要固定出口的应用使用 HTTP 或 SOCKS5 代理 `127.0.0.1:17890`，然后在配置卡片查看观测出口。这个模式关闭 TUN，不设置系统代理，仅处理主动连接该端口的流量。启用全机保护版的 `01` 需要上述签名打包脚本嵌入扩展。
+普通 `flutter build macos` 构建「TUN + Chrome 固定 ISP」。在向导中粘贴 HTTPS 订阅和 `socks5://user:password@host:port`，保存后点击「用固定 ISP 打开 Chrome」，或选择已有的固定 ISP 配置。启用组合模式前退出原版 FlClash 并停止它的 TUN。组合模式复用标准 macOS TUN 授权流程。
+
+从 ZIP 解压并打开 `FlClash ISP.app`。首次打开 TUN 时，已签名的 App 校验包内 Core 的签名，再请求 macOS 授权。包内 Core 设置自身的执行权限，App 确认后重启 Core。App 与 Core 必须由同一个 Apple 开发团队签名，Core 的签名标识为 `com.milesradford99.flclash.isp.core`。
+
+普通应用走 TUN，保留订阅的规则、DNS、直连和拒绝路径。规则引用的受支持内联 VPN 节点都使用「共享 VPN 节点」当前的选项。外部代理提供商及未参与共享的自定义出站仍按订阅处理。独立 Chrome 窗口走 `127.0.0.1:17890`，在同一个 VPN 节点后续接固定 ISP。入口直接绑定 ISP 出站，ISP 失败时，Chrome 和指定应用的固定 ISP 连接会报错。点「共享 VPN 节点」切一次，即可更新两条路径。旧的固定 ISP 配置可以直接沿用。
+
+在「检查 macOS 和 Chrome」打开「指定应用」，可以给当前固定 ISP 配置添加本机 App 或独立可执行文件。已识别的 App 主程序和包内 Helper 的新 TCP 连接使用与 Chrome 相同的固定 ISP 出站。已匹配的 UDP 会被拒绝。外部 Chrome、Git、SSH、MCP 和系统 DNS 以实际发起连接的进程为准。先给 Antigravity 发起新连接，再用列表的检测按钮核对是否命中。
+
+组合版在 ISP 出站拨号失败后先验证当前链路。确认失败后，Core 每批最多并发检查三个其他 VPN → ISP 候选，优先尝试近期成功过的节点，在首批通过的候选中按延迟选节点。填写预期出口 IP 时，切换前会核对。全部失败时进入 30 秒到 5 分钟的递增冷却。自动切换只更新共享 VPN 选项，已建立连接保留。
+
+「检查 macOS 和 Chrome → 链路检查设置」可以打开定时检查并调整秒数。定时检查默认关闭。启用后的默认间隔为 120 秒，近期有 ISP 连接活动时检查当前链路。
+
+启用全机保护版的 `01` 需要上述签名打包脚本嵌入扩展。
 
 ## 使用和恢复
 
@@ -35,9 +47,9 @@ tool/package_managed_macos.sh TEAM_ID 'Developer ID Application: Your Name (TEAM
 
 ## 检查 macOS 和 Chrome
 
-保存固定 ISP 配置后会显示常用操作，也可从固定 ISP 卡片的设备图标重新打开。普通本机代理版，保存固定 ISP 配置后点击「用固定 ISP 打开 Chrome」。FlClash 启动对应链路，检查本机代理是否就绪，再以独立数据目录打开 Chrome。这个浏览空间可重复使用，与原有 Chrome 会话分开。此窗口设置 SOCKS5 本机代理和 WebRTC 启动参数。组织策略及 WebRTC 实际路径可以在高级诊断中检查。
+保存固定 ISP 配置后会显示常用操作，也可从固定 ISP 卡片的设备图标重新打开。在「用固定 ISP 打开 Chrome」下选择一个空间，也可以新建或改名。原有的「Chrome ISP」空间直接沿用。各空间可以同时打开，标签页、登录和 Cookie 分别保存，窗口共用当前选中的固定 ISP。FlClash 确认 TUN 和专用入口就绪后才启动 Chrome，并设置本机 SOCKS5 代理和 WebRTC 启动参数。组织策略及 WebRTC 实际路径可以在高级诊断中检查。
 
-首页显示连接、Chrome 和 WebRTC 系统策略状态。点击 WebRTC 的「系统策略未设置」可打开安装入口，再在 macOS「通用 → 设备管理」确认。已有受管策略时提供核对入口。点语言或时区行可打开 macOS 设置。更换系统设置后，切回 App 会重新读取。只读检测不会启动代理或浏览器。以下手动验收流程在「高级诊断」中，普通本机代理版的全机 TUN 和过滤器检查标为不适用。
+首页显示连接、Chrome 和 WebRTC 系统策略状态。点击 WebRTC 的「系统策略未设置」可打开安装入口，再在 macOS「通用 → 设备管理」确认。已有受管策略时提供核对入口。点语言或时区行可打开 macOS 设置。更换系统设置后，切回 App 会重新读取。只读检测不会启动代理或浏览器。以下手动验收流程在「高级诊断」中，组合版显示实际 TUN 状态，全机过滤器检查标为不适用。
 
 1. 选择 Chrome Profile，或用「Chrome Profile · +」进入 Chrome 的创建流程。对照目标窗口 `chrome://version` 的 Profile Path 后，回到检测页确认。快捷入口可以打开目标 Profile 的策略、语言和安全 DNS 页面，另有 macOS 语言与地区、日期与时间设置入口。
 2. 在目标 Profile 的 `chrome://policy` 重新加载策略，导出 JSON 文件后在检测页导入，也可复制 JSON 后用剪贴板导入。检测页只保留 WebRTC、DoH 和必要的来源元数据。策略缺失时「一键配置」会预览并打开现有系统级 WebRTC 描述文件，用户在设备管理中确认安装。已有其他受管值时，先处理冲突。回滚时在设备管理中移除本工具的「FlClash ISP Chrome WebRTC」，重新检测并导入策略。Chrome 安全 DNS 配置由用户在 Chrome 中查看和决定。

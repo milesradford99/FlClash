@@ -6,6 +6,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/features/managed_isp/browser_probe.dart';
 import 'package:fl_clash/features/managed_isp/diagnostics.dart';
+import 'package:fl_clash/features/managed_isp/monitor.dart';
 import 'package:fl_clash/features/managed_isp/platform.dart';
 import 'package:fl_clash/features/managed_isp/profile.dart';
 import 'package:fl_clash/l10n/l10n.dart';
@@ -16,6 +17,9 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'managed_isp_applications.dart';
+import 'managed_isp_monitor_settings.dart';
 
 class ManagedIspDiagnostics extends ConsumerStatefulWidget {
   const ManagedIspDiagnostics({super.key, this.profileId});
@@ -50,6 +54,7 @@ class _ManagedIspDiagnosticsState extends ConsumerState<ManagedIspDiagnostics>
   bool _profileConfirmed = false;
   bool _busy = false;
   bool _advanced = false;
+  bool _editingSpaces = false;
   bool _webRtcPending = false;
   ({bool https, String? ip, bool? systemResolved})? _https;
   BrowserProbeEvidence? _browser;
@@ -150,8 +155,10 @@ class _ManagedIspDiagnosticsState extends ConsumerState<ManagedIspDiagnostics>
     _browserResult.clear();
   }
 
-  Map<String, String> get _profiles => {
-    if (_native['chromeProfiles'] case final List items)
+  Map<String, String> get _profiles => _chromeEntries('chromeProfiles');
+
+  Map<String, String> _chromeEntries(String key) => {
+    if (_native[key] case final List items)
       for (final item in items)
         if (item case {'id': final String id, 'name': final String name})
           id: name,
@@ -165,16 +172,17 @@ class _ManagedIspDiagnosticsState extends ConsumerState<ManagedIspDiagnostics>
       _native['tunReady'] == true &&
       _core['tun'] == true &&
       _core['native_dns'] == true;
-  bool get _routesReady =>
-      _core['rule_mode'] == true &&
-      _core['rule_chain'] == true &&
-      _core['managed_doh'] == true &&
-      _core['ipv6'] == false &&
-      _core['has_hosts'] == true &&
-      _core['allow_lan'] == false &&
-      (_mode != 'local_proxy' ||
-          (_core['tun'] == false &&
-              _core['mixed_port'] == managedIspLocalPort));
+  bool get _routesReady {
+    if (_mode == 'local_proxy') {
+      return _core['rule_mode'] == true && _core['chrome_isp'] == true;
+    }
+    return _core['rule_mode'] == true &&
+        _core['rule_chain'] == true &&
+        _core['managed_doh'] == true &&
+        _core['ipv6'] == false &&
+        _core['has_hosts'] == true &&
+        _core['allow_lan'] == false;
+  }
 
   bool get _canProbe =>
       _coreReady &&
@@ -245,7 +253,32 @@ class _ManagedIspDiagnosticsState extends ConsumerState<ManagedIspDiagnostics>
         (managed.length == 1 ? managed.single : null);
   }
 
-  Future<void> _openIspChrome() async {
+  Future<void> _saveChromeSpace({String? id, String name = ''}) async {
+    final labels = context.appLocalizations;
+    final label = await dialogs.showCommonDialog<String>(
+      child: InputDialog(
+        title: id == null ? labels.ispDiagNewChromeSpace : labels.rename,
+        labelText: labels.name,
+        value: name,
+        selectAll: true,
+        inputFormatters: TextInputLimits.limit(TextInputLimits.name),
+        validator: (value) => value == null || value.trim().isEmpty
+            ? labels.profileNameNullValidationDesc
+            : null,
+      ),
+    );
+    if (label == null || !mounted) return;
+    try {
+      await _platform.saveIspChromeSpace(id: id, name: label.trim());
+    } on PlatformException catch (error) {
+      if (error.code != 'duplicateChromeSpace') rethrow;
+      if (mounted) setState(() => _error = labels.ispDiagDuplicateChromeSpace);
+      return;
+    }
+    if (mounted) await _detect();
+  }
+
+  Future<void> _openIspChrome(String space) async {
     final labels = context.appLocalizations;
     final id = ref.read(currentProfileIdProvider);
     final target = _targetProfile(ref.read(profilesProvider), id);
@@ -255,7 +288,9 @@ class _ManagedIspDiagnosticsState extends ConsumerState<ManagedIspDiagnostics>
         ref.read(safeModeProvider)) {
       return;
     }
-    if (id != target.id || !ref.read(isStartProvider)) {
+    if (id != target.id ||
+        !ref.read(isStartProvider) ||
+        !ref.read(patchClashConfigProvider).tun.enable) {
       try {
         await ref
             .read(profilesActionProvider.notifier)
@@ -268,12 +303,24 @@ class _ManagedIspDiagnosticsState extends ConsumerState<ManagedIspDiagnostics>
     if (!mounted) return;
     await _detect();
     if (!mounted) return;
-    if (_observedProfile != target.id || _mode != 'local_proxy' || !_canProbe) {
+    if (_observedProfile != target.id ||
+        _mode != 'local_proxy' ||
+        !_canProbe ||
+        _core['tun_running'] != true) {
       setState(() => _error = labels.managedIspLocalFailed);
       return;
     }
     try {
-      await _platform.openIspChrome();
+      await _platform.openIspChrome(space);
+      if (mounted && _profile != space) {
+        setState(() {
+          _profile = space;
+          _profileConfirmed = false;
+          _policies = null;
+          _policyAt = null;
+          _clearProbeResults();
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _error = labels.ispDiagChromeLaunchFailed);
     }
@@ -321,12 +368,7 @@ class _ManagedIspDiagnosticsState extends ConsumerState<ManagedIspDiagnostics>
       context: context,
       builder: (context) => SelectionSheet<String>(
         title: 'Chrome ${context.appLocalizations.profile}',
-        sections: [
-          SelectionSection(
-            items: profiles.keys.toList(),
-            subtitleBuilder: (_, item) => item,
-          ),
-        ],
+        sections: [SelectionSection(items: profiles.keys.toList())],
         labelBuilder: (item) => profiles[item] ?? item,
         selectedOf: (_) => _profile,
         onSelected: (item) => Navigator.of(context).pop(item),
@@ -365,7 +407,9 @@ class _ManagedIspDiagnosticsState extends ConsumerState<ManagedIspDiagnostics>
     await _detect();
     if (!mounted || !_canProbe) return;
     final selected = _observedProfile;
-    final port = _core['mixed_port'];
+    final port = _mode == 'local_proxy'
+        ? managedIspLocalPort
+        : _core['mixed_port'];
     if (port is! int || !isUsableMixedPort(port)) return;
     final result = await probeIspHttps(
       url,
@@ -691,6 +735,99 @@ class _ManagedIspDiagnosticsState extends ConsumerState<ManagedIspDiagnostics>
         trailing: TooltipLabel(status, maxLines: 2),
       );
 
+  Future<void> _pickSharedVpn(Group group) async {
+    final profileId = ref.read(currentProfileIdProvider);
+    final name = await showFormSheet<String>(
+      context: context,
+      builder: (context) => SelectionSheet<String>(
+        title: context.appLocalizations.managedIspSharedNode,
+        sections: [
+          SelectionSection(
+            items: group.all.map((proxy) => proxy.name).toList(),
+          ),
+        ],
+        labelBuilder: _vpnLabel,
+        selectedOf: (_) => group.realNow,
+        onSelected: (name) => Navigator.of(context).pop(name),
+      ),
+    );
+    if (!mounted ||
+        name == null ||
+        profileId != ref.read(currentProfileIdProvider)) {
+      return;
+    }
+    await ref
+        .read(proxiesActionProvider.notifier)
+        .changeProxy(groupName: sharedIspVpnGroup, proxyName: name);
+    if (mounted) {
+      setState(_clearProbeResults);
+      await _detect();
+    }
+  }
+
+  String _vpnLabel(String name) =>
+      name.startsWith('VPN / ') ? name.substring('VPN / '.length) : name;
+
+  List<Widget> _chromeSpaces(AppLocalizations labels, Profile? target) {
+    final spaces = _chromeEntries('ispChromeSpaces');
+    final hint = !_chrome
+        ? labels.managedIspChromeAbsent
+        : spaces.isEmpty
+        ? labels.error
+        : target == null
+        ? labels.ispDiagNoIspProfile
+        : labels.ispDiagChromeIsolation;
+    return [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(
+            child: Text(
+              labels.ispDiagOpenIspChrome,
+              style: AppTextStyle.headline.of(context),
+            ),
+          ),
+          if (spaces.isNotEmpty)
+            TextButton(
+              onPressed: _busy
+                  ? null
+                  : () => setState(() => _editingSpaces = !_editingSpaces),
+              child: Text(_editingSpaces ? labels.done : labels.edit),
+            ),
+        ],
+      ),
+      if (spaces.isNotEmpty)
+        generateSection(
+          items: [
+            for (final MapEntry(:key, :value) in spaces.entries)
+              FormRow(
+                key: ValueKey(key),
+                title: value,
+                trailing: Text(
+                  _editingSpaces
+                      ? labels.rename
+                      : labels.ispDiagOpenChromeSpace,
+                ),
+                onPressed: _busy || (!_editingSpaces && target == null)
+                    ? null
+                    : _editingSpaces
+                    ? () => unawaited(
+                        _run(() => _saveChromeSpace(id: key, name: value)),
+                      )
+                    : () => unawaited(_run(() => _openIspChrome(key))),
+              ),
+            if (!_editingSpaces)
+              _action(labels.ispDiagNewChromeSpace, _saveChromeSpace),
+          ],
+        ),
+      if (_observedAt != null)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          child: Text(hint, style: AppTextStyle.footnote.of(context)),
+        ),
+    ];
+  }
+
   List<Widget> _overview(
     AppLocalizations labels,
     Profile? target,
@@ -699,11 +836,13 @@ class _ManagedIspDiagnosticsState extends ConsumerState<ManagedIspDiagnostics>
     final observed = _observedAt;
     const local = !managedIspSystemProtection;
     final ready = stable && _canProbe && target?.id == _observedProfile;
-    final startHint = target == null
-        ? labels.ispDiagNoIspProfile
-        : !_chrome
-        ? labels.managedIspChromeAbsent
-        : labels.ispDiagChromeIsolation;
+    final group = local && stable && target?.id == _observedProfile
+        ? ref.watch(
+            groupsProvider.select(
+              (groups) => groups.getGroup(sharedIspVpnGroup),
+            ),
+          )
+        : null;
     final connection = observed == null || !stable
         ? labels.loading
         : ready
@@ -712,17 +851,37 @@ class _ManagedIspDiagnosticsState extends ConsumerState<ManagedIspDiagnostics>
         ? labels.ispDiagNoIspProfile
         : labels.disconnected;
     return [
-      if (local)
-        FilledButton(
-          onPressed: _busy || !_chrome || target == null
-              ? null
-              : () => unawaited(_run(_openIspChrome)),
-          child: Text(labels.ispDiagOpenIspChrome),
-        ),
-      if (local && observed != null)
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-          child: Text(startHint, style: AppTextStyle.footnote.of(context)),
+      if (local) ..._chromeSpaces(labels, target),
+      if (local && target != null && !ref.watch(safeModeProvider))
+        generateSection(
+          items: [
+            FormRow(
+              title: labels.ispAppsTitle,
+              trailing: const GlyphIcon(AppGlyphs.chevronForward),
+              onPressed: _busy
+                  ? null
+                  : () => showFormSheet<void>(
+                      context: context,
+                      builder: (_) =>
+                          ManagedIspApplications(profileId: target.id),
+                    ),
+            ),
+            FormRow(
+              title: labels.ispMonitorSettings,
+              trailing: const GlyphIcon(AppGlyphs.chevronForward),
+              onPressed: _busy
+                  ? null
+                  : () async {
+                      final settings = await preferences.ispMonitorSettings();
+                      if (!mounted) return;
+                      await showFormSheet<void>(
+                        context: context,
+                        builder: (_) =>
+                            ManagedIspMonitorSettings(settings: settings),
+                      );
+                    },
+            ),
+          ],
         ),
       generateSection(
         items: [
@@ -732,9 +891,37 @@ class _ManagedIspDiagnosticsState extends ConsumerState<ManagedIspDiagnostics>
               final ip = ready && observedExit?.profileId == target?.id
                   ? observedExit?.ip
                   : null;
-              return _status(labels.connection, ip ?? connection);
+              return ValueListenableBuilder(
+                valueListenable: managedIspMonitorState,
+                builder: (context, monitor, child) {
+                  final state = ready && monitor?.profileId == target?.id
+                      ? monitor?.state
+                      : null;
+                  final status = switch (state) {
+                    'checking' => labels.ispMonitorChecking,
+                    'down' => labels.ispMonitorDown,
+                    'healthy' => ip ?? labels.connected,
+                    _ => ip ?? connection,
+                  };
+                  return _status(labels.connection, status);
+                },
+              );
             },
           ),
+          if (local && stable && _managed) ...[
+            _status(
+              'TUN',
+              _core['tun_running'] == true ? labels.enabled : labels.disabled,
+            ),
+            if (group != null)
+              _status(
+                labels.managedIspSharedNode,
+                _vpnLabel(group.realNow),
+                onPressed: _busy
+                    ? null
+                    : () => unawaited(_run(() => _pickSharedVpn(group))),
+              ),
+          ],
           _status(
             'Chrome',
             observed == null
@@ -861,7 +1048,7 @@ class _ManagedIspDiagnosticsState extends ConsumerState<ManagedIspDiagnostics>
           generateSection(
             items: [
               _action(
-                'Chrome Profile · ${_profile ?? labels.settings}',
+                'Chrome Profile · ${_profiles[_profile] ?? labels.settings}',
                 _selectChrome,
               ),
               if (_chrome) ...[

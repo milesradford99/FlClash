@@ -15,6 +15,7 @@ enum CoreMethod {
   configDecrypt('config.decrypt'),
   configRead('config.read'),
   configIspStatus('config.ispStatus'),
+  configIspMonitor('config.ispMonitor'),
   profileBase('profile.base'),
   profileOutbounds('profile.outbounds'),
   profileBuild('profile.build'),

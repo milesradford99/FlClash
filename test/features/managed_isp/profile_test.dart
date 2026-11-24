@@ -60,6 +60,63 @@ void main() {
     }
   });
 
+  test(
+    'TUN keeps subscription rules and routes Chrome through the shared VPN',
+    () {
+      final original = {
+        'proxies': [_node('VPN A', '192.0.2.4'), _node('VPN B', '192.0.2.5')],
+        'proxy-groups': [
+          {
+            'name': 'Original',
+            'type': 'select',
+            'proxies': ['DIRECT'],
+            'include-all-proxies': true,
+          },
+        ],
+        'rules': ['DOMAIN,local.example.test,DIRECT', 'MATCH,Original'],
+        'dns': {
+          'enable': true,
+          'nameserver': ['https://example.test/dns-query'],
+        },
+        'tun': {'enable': true},
+      };
+      final plan = _profile().sharedConfig(original, port: 17890);
+      expect(plan['rules'], original['rules']);
+      expect(plan['tun'], original['tun']);
+      expect(plan['dns'], original['dns']);
+
+      final groups = {
+        for (final group in plan['proxy-groups'] as List) group['name']: group,
+      };
+      expect(groups[sharedIspVpnGroup]['proxies'], [
+        'VPN / VPN A',
+        'VPN / VPN B',
+      ]);
+      expect(groups['Original']['proxies'], ['DIRECT', 'VPN A', 'VPN B']);
+      expect(groups['VPN A']['proxies'], [sharedIspVpnGroup]);
+      expect(groups['VPN B']['proxies'], [sharedIspVpnGroup]);
+      final exit = (plan['proxies'] as List).last as Map;
+      expect(exit['dialer-proxy'], sharedIspVpnGroup);
+      expect(exit['udp'], isFalse);
+      final chrome = (plan['listeners'] as List).single as Map;
+      expect(chrome['listen'], '127.0.0.1');
+      expect(chrome['proxy'], exit['name']);
+      expect(chrome['udp'], isFalse);
+    },
+  );
+
+  test('existing subscription listeners cannot take the Chrome port', () {
+    expect(
+      () => _profile().sharedConfig({
+        'proxies': [_node('VPN A', '192.0.2.4')],
+        'listeners': [
+          {'name': 'custom', 'port': 17890},
+        ],
+      }, port: 17890),
+      throwsFormatException,
+    );
+  });
+
   test('keeps the original profile and uses only ISP chains in 01', () {
     final first = _node('Node A', 'one.example.test');
     final second = _node('Node B', 'two.example.test');

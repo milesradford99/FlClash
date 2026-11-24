@@ -154,11 +154,20 @@ Map<String, dynamic> inboundConfigOf(
   'skip-auth-prefixes': const <String>[],
 };
 
-Future<RealProfile> makeRealProfileTask(MakeRealProfileState data) async {
-  return compute<MakeRealProfileState, RealProfile>(_makeRealProfileTask, data);
+Future<RealProfile> makeRealProfileTask(
+  MakeRealProfileState data, {
+  List<String> priorityRules = const [],
+}) {
+  return compute(
+    (input) => _makeRealProfileTask(input.data, input.priorityRules),
+    (data: data, priorityRules: priorityRules),
+  );
 }
 
-Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
+Future<RealProfile> _makeRealProfileTask(
+  MakeRealProfileState data,
+  List<String> priorityRules,
+) async {
   final rawConfig = Map.from(data.rawConfig);
   final realPatchConfig = data.realPatchConfig;
   final profilesPath = data.profilesPath;
@@ -428,7 +437,7 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
             fallback: data.defaultExitTarget ?? lastMatchTarget(rules),
           ),
         );
-  rawConfig['rules'] = [...mitmRules, ...rules];
+  rawConfig['rules'] = [...priorityRules, ...mitmRules, ...rules];
   final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));
   return (yaml: yaml, md5: yaml.toMd5(), counts: configCountsOf(rawConfig));
 }

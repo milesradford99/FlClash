@@ -30,7 +30,12 @@ func handleISPStatus() map[string]any {
 		}
 	}
 
-	count, chainOK := inspectISPGroup(tunnel.Proxies())
+	proxies := tunnel.Proxies()
+	count, chainOK := inspectISPGroup(proxies)
+	if _, ok := ispListenerOption(cfg); ok {
+		selector := proxies[ispSharedGroup].Adapter().(*outboundgroup.Selector)
+		count = len(selector.GetProxies(false))
+	}
 	dnsOK := cfg.DNS != nil && cfg.DNS.Enable && !cfg.DNS.IPv6 &&
 		cfg.DNS.UseHosts && !cfg.DNS.UseSystemHosts &&
 		cfg.DNS.EnhancedMode.String() == "fake-ip" &&
@@ -39,6 +44,10 @@ func handleISPStatus() map[string]any {
 		len(cfg.DNS.NameServerPolicy) == 0 && len(cfg.DNS.ProxyServerPolicy) == 0
 
 	tun := cfg.General.Tun
+	var health map[string]any
+	if monitor := activeISPMonitor.Load(); monitor != nil {
+		health = monitor.status()
+	}
 	return map[string]any{
 		"loaded":      true,
 		"running":     isRunning.Load(),
@@ -50,10 +59,13 @@ func handleISPStatus() map[string]any {
 		"native_dns": tun.DNSMode == "native" && tun.StrictRoute &&
 			len(tun.DNSHijack) == 2 && slices.Contains(tun.DNSHijack, "any:53") &&
 			slices.Contains(tun.DNSHijack, "tcp://any:53"),
-		"mixed_port": listener.GetPorts().MixedPort,
-		"allow_lan":  cfg.General.AllowLan,
-		"ipv6":       cfg.General.IPv6,
-		"has_hosts":  cfg.Hosts != nil,
+		"mixed_port":  listener.GetPorts().MixedPort,
+		"chrome_isp":  ispListener != nil,
+		"isp_health":  health,
+		"tun_running": isRunning.Load() && listener.GetTunConf().Enable,
+		"allow_lan":   cfg.General.AllowLan,
+		"ipv6":        cfg.General.IPv6,
+		"has_hosts":   cfg.Hosts != nil,
 	}
 }
 

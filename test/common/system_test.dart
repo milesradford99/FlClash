@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/app_paths.dart';
@@ -23,12 +24,14 @@ class _RecordedRun {
 class _FakeProcesses {
   final List<_RecordedRun> runs = [];
   final Map<String, String> _stdout = {};
+  final Map<String, String> _stderr = {};
   final Map<String, int> _exitCodes = {};
   final Set<String> _failures = {};
 
-  void stub(String key, String stdout, {int exitCode = 0}) {
+  void stub(String key, String stdout, {int exitCode = 0, String stderr = ''}) {
     _stdout[key] = stdout;
     _exitCodes[key] = exitCode;
+    _stderr[key] = stderr;
   }
 
   void stubThrow(String key) {
@@ -62,7 +65,7 @@ class _FakeProcesses {
           _stdout[recorded.key] ??
           _stdout[executable] ??
           '',
-      '',
+      _stderr[executable] ?? '',
     );
   }
 
@@ -303,14 +306,6 @@ void main() {
   );
 
   group('elevation shells', () {
-    test('macOS hands the Core to the admin group and nobody else', () {
-      expect(
-        System.macOSElevationShell('/Apps/Fl Clash/core'),
-        "chown root:admin '/Apps/Fl Clash/core' && "
-        "chmod 4750 '/Apps/Fl Clash/core'",
-      );
-    });
-
     test('Linux hands the Core to the requesting user\'s group', () {
       final shell = System.linuxElevationShell('/opt/FlClash/FlClashCore');
 
@@ -321,31 +316,97 @@ void main() {
       expect(shell, contains(r'chown "root:$group" '));
       expect(shell, endsWith("chmod 4750 '/opt/FlClash/FlClashCore'"));
     });
-
-    test('neither leaves execute to others', () {
-      for (final shell in [
-        System.macOSElevationShell('/core'),
-        System.linuxElevationShell('/core'),
-      ]) {
-        expect(shell, isNot(contains('+sx')));
-        expect(shell, contains('chmod 4750'));
-      }
-    });
   });
 
   group('authorizeCore on macOS', () {
+    const channel = MethodChannel('flclash/macos_tun');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    late List<MethodCall> requests;
+
+    void stubNative(String outcome, {String? stat}) {
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        requests.add(call);
+        if (stat != null) {
+          processes.stub('stat', stat);
+        }
+        return outcome;
+      });
+    }
+
+    setUp(() {
+      requests = [];
+      stubNative('error');
+    });
+
+    tearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
     test('refuses an account outside the admin group', () async {
       processes.stub('id', 'alice staff everyone');
 
       expect(await system.authorizeCore(), AuthorizeCode.error);
-      expect(processes.ran('osascript'), isFalse);
+      expect(requests, isEmpty);
     });
 
-    test('elevates the Core for an admin account', () async {
+    test(
+      'elevates inside the signed bundle and rechecks permissions',
+      () async {
+        processes.stub('id', 'alice staff admin');
+        stubNative('success', stat: 'root:admin -rwsr-x---');
+
+        expect(await system.authorizeCore(), AuthorizeCode.success);
+        expect(requests.single.method, 'authorizeCore');
+        expect(requests.single.arguments, isNull);
+        expect(processes.ran('osascript'), isFalse);
+      },
+    );
+
+    test('reports a Core failure after administrator approval', () async {
+      processes.stub('id', 'alice staff admin');
+      stubNative('permissions');
+
+      expect(await system.authorizeCore(), AuthorizeCode.corePermissionFailed);
+    });
+
+    test('keeps the existing path for unsigned development builds', () async {
+      processes.stub('id', 'alice staff admin');
+      stubNative('development');
+      processes.stub(
+        'osascript',
+        '',
+        exitCode: 1,
+        stderr:
+            'chown: Operation not permitted\n'
+            'FlClashCore permission setup failed (1)',
+      );
+
+      expect(await system.authorizeCore(), AuthorizeCode.corePermissionFailed);
+      final arguments = processes.argumentsFor('osascript');
+      expect(arguments[1], contains('chown root:admin'));
+      expect(arguments[1], contains('chmod 4750'));
+      expect(arguments[1], contains('quoted form of item 1 of argv'));
+      expect(arguments.last, appPath.corePath);
+    });
+
+    test('requires the Core permissions even after native success', () async {
+      processes.stub('id', 'alice staff admin');
+      processes.stub('stat', 'alice:staff -rwxr-xr-x');
+      stubNative('success');
+
+      expect(await system.authorizeCore(), AuthorizeCode.corePermissionFailed);
+    });
+
+    test('distinguishes a dismissed administrator prompt', () async {
       processes.stub('id', 'alice staff admin');
 
-      expect(await system.authorizeCore(), AuthorizeCode.success);
-      expect(processes.argumentsFor('osascript').last, contains('chmod 4750'));
+      expect(await system.authorizeCore(), AuthorizeCode.error);
+    });
+
+    test('uses an authorized Core without prompting again', () async {
+      processes.stub('stat', 'root:admin -rwsr-x---');
+
+      expect(await system.authorizeCore(), AuthorizeCode.none);
+      expect(requests, isEmpty);
     });
   }, skip: system.isMacOS ? false : 'macOS only');
 

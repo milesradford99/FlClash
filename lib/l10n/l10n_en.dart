@@ -1940,6 +1940,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'TUN could not be authorized, so it was turned off.';
 
   @override
+  String get tunCorePermissionFailed =>
+      'macOS couldn’t set Core permissions. If you opened FlClash ISP from Documents or Downloads, move the app to Applications and try again.';
+
+  @override
+  String get tunStartFailed =>
+      'The Core couldn’t start TUN. Turn off TUN in any other VPN app and try again. Check Logs if the problem persists.';
+
+  @override
   String get sudoPasswordTitle => 'Enter your password for sudo';
 
   @override
@@ -3977,7 +3985,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get managedIspConnection => 'SOCKS5 connection URL';
 
   @override
-  String get managedIspLocalMode => 'VPN → ISP (local proxy)';
+  String get managedIspLocalMode => 'TUN + fixed ISP for Chrome';
+
+  @override
+  String get managedIspSharedNode => 'Shared VPN node';
 
   @override
   String get managedIspLocalFailed =>
@@ -4016,8 +4027,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ispDiagOpenIspChrome => 'Open Chrome with fixed ISP';
 
   @override
+  String get ispDiagNewChromeSpace => 'New space';
+
+  @override
+  String get ispAppsTitle => 'Selected apps';
+
+  @override
+  String get ispMonitorSettings => 'Link check settings';
+
+  @override
+  String get ispMonitorPeriodic => 'Check the current link periodically';
+
+  @override
+  String get ispMonitorInterval => 'Check interval (seconds)';
+
+  @override
+  String get ispMonitorHint =>
+      'Periodic checks run when ISP traffic is active. Connection failures trigger on-demand checks of backup nodes.';
+
+  @override
+  String get ispMonitorChecking => 'Checking the ISP link';
+
+  @override
+  String get ispMonitorDown =>
+      'Fixed ISP unavailable. Waiting before retrying.';
+
+  @override
+  String get ispMonitorInvalidInterval =>
+      'Enter an interval from 1 to 86400 seconds.';
+
+  @override
+  String get ispAppsAdd => 'Add app';
+
+  @override
+  String get ispAppsStart => 'Start fixed ISP';
+
+  @override
+  String get ispAppsWaiting => 'Waiting for a connection';
+
+  @override
+  String get ispAppsMatched => 'Fixed ISP in use';
+
+  @override
+  String get ispAppsNeedsTun => 'Waiting for TUN';
+
+  @override
+  String get ispAppsHint =>
+      'Rules apply to new connections. Add external programs separately.';
+
+  @override
+  String get ispAppsFailed =>
+      'Could not update selected apps. Choose an app or executable, or try again.';
+
+  @override
+  String get ispDiagOpenChromeSpace => 'Open';
+
+  @override
+  String get ispDiagDuplicateChromeSpace => 'A space already has this name.';
+
+  @override
   String get ispDiagChromeIsolation =>
-      'The first launch creates a separate Chrome workspace that is reused next time.';
+      'Spaces keep separate tabs, sign-ins and cookies and use the current fixed ISP.';
 
   @override
   String get ispDiagChromeAvailable => 'Installed';

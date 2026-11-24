@@ -427,7 +427,7 @@ enum EditorFontSize {
   const EditorFontSize(this.value);
 }
 
-enum AuthorizeCode { none, success, error }
+enum AuthorizeCode { none, success, error, corePermissionFailed }
 
 enum TunAuthorizationState { none, authorized, unauthorized }
 

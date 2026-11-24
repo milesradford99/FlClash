@@ -85,11 +85,19 @@ class System {
         mode[9] != 't';
   }
 
-  @visibleForTesting
-  static String macOSElevationShell(String corePath) {
-    final path = _shellEscape(corePath);
-    return 'chown root:admin $path && chmod 4750 $path';
-  }
+  static const _macOSCorePermissionsFailed =
+      'FlClashCore permission setup failed';
+  static const _macOSTun = MethodChannel('flclash/macos_tun');
+
+  static const _macOSElevationScript =
+      '''
+on run argv
+  set corePath to quoted form of item 1 of argv
+  set changeOwner to "/usr/sbin/chown root:admin " & corePath
+  set changeMode to "/bin/chmod 4750 " & corePath
+  do shell script (changeOwner & " && " & changeMode & " || { echo '$_macOSCorePermissionsFailed' >&2; exit 1; }") with administrator privileges
+end run
+''';
 
   @visibleForTesting
   static String linuxElevationShell(String corePath) {
@@ -226,16 +234,7 @@ class System {
         );
         return AuthorizeCode.error;
       }
-      final shell = macOSElevationShell(appPath.corePath);
-      final arguments = [
-        '-e',
-        'do shell script "$shell" with administrator privileges',
-      ];
-      final result = await runProcess('osascript', arguments);
-      if (result.exitCode != 0) {
-        return AuthorizeCode.error;
-      }
-      return AuthorizeCode.success;
+      return _authorizeMacOSCore();
     } else if (system.isLinux) {
       final elevated = await linuxElevation.elevate([
         '/bin/sh',
@@ -245,6 +244,41 @@ class System {
       return elevated ? AuthorizeCode.success : AuthorizeCode.error;
     }
     return AuthorizeCode.error;
+  }
+
+  Future<AuthorizeCode> _authorizeMacOSCore() async {
+    final outcome = await _macOSTun.invokeMethod<String>('authorizeCore');
+    switch (outcome) {
+      case 'success':
+        break;
+      case 'permissions':
+        return AuthorizeCode.corePermissionFailed;
+      case 'development':
+        final result = await runProcess('osascript', [
+          '-e',
+          _macOSElevationScript,
+          appPath.corePath,
+        ]);
+        if (result.exitCode != 0) {
+          final error = result.stderr.toString();
+          commonPrint.log(
+            'macOS TUN elevation: $error',
+            logLevel: LogLevel.error,
+          );
+          return error.contains(_macOSCorePermissionsFailed)
+              ? AuthorizeCode.corePermissionFailed
+              : AuthorizeCode.error;
+        }
+      default:
+        commonPrint.log(
+          'macOS TUN elevation: $outcome',
+          logLevel: LogLevel.error,
+        );
+        return AuthorizeCode.error;
+    }
+    return await checkIsAdmin()
+        ? AuthorizeCode.success
+        : AuthorizeCode.corePermissionFailed;
   }
 
   Future<void> back() async {

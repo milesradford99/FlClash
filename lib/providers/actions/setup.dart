@@ -109,6 +109,7 @@ class SetupAction extends _$SetupAction {
       _managedIspTicker?.cancel();
       _managedIspTicker = null;
       managedIspExit.value = null;
+      managedIspMonitorState.value = null;
       _startTime = null;
       debouncer.cancel(FunctionTag.applyProfile);
       _pendingForceApply = false;
@@ -367,9 +368,6 @@ class SetupAction extends _$SetupAction {
   @protected
   Future<void> setCoreRunning(bool running) {
     if (!running) return _core.stopListener();
-    if (_managedSelected && !managedIspSystemProtection) {
-      return _core.startMixedListener(managedIspLocalPort);
-    }
     return _core.startListener();
   }
 
@@ -435,6 +433,7 @@ class SetupAction extends _$SetupAction {
   }
 
   void changeMode(Mode mode) {
+    if (_managedSelected && !managedIspSystemProtection) return;
     ref
         .read(patchClashConfigProvider.notifier)
         .update((state) => state.copyWith(mode: mode));
@@ -540,6 +539,8 @@ class SetupAction extends _$SetupAction {
   Future<BuiltProfile> getProfile({
     required SetupState setupState,
     required PatchClashConfig patchConfig,
+    ManagedIspProfile? sharedIsp,
+    List<String> priorityRules = const [],
   }) async {
     final profileId = setupState.profileId;
     if (profileId == null) {
@@ -573,7 +574,7 @@ class SetupAction extends _$SetupAction {
     final isCustom = setupState.profileType == ProfileType.custom;
     final scriptContent = isCustom ? null : await setupState.script?.content;
     final hasScript = scriptContent?.isNotEmpty == true;
-    final profileBase = !isCustom && !hasScript
+    final profileBase = !isCustom && !hasScript && sharedIsp == null
         ? await _core.getProfileBase(profileId)
         : null;
     Map<String, dynamic> rawConfig = isCustom
@@ -589,6 +590,9 @@ class SetupAction extends _$SetupAction {
     final rules = isCustom ? setupState.rules : <Rule>[];
     if (hasScript) {
       rawConfig = await handleEvaluate(scriptContent!, rawConfig);
+    }
+    if (sharedIsp != null) {
+      rawConfig = sharedIsp.sharedConfig(rawConfig, port: managedIspLocalPort);
     }
     final directory = await appPath.profilesPath;
     final hasCustomExit =
@@ -629,6 +633,7 @@ class SetupAction extends _$SetupAction {
         safeMode: ref.read(safeModeProvider),
         mitmModules: setupState.mitmModules,
       ),
+      priorityRules: priorityRules,
     );
     if (profileBase == null) {
       return (yaml: res.yaml, md5: res.md5, counts: res.counts, base: null);
@@ -777,12 +782,15 @@ class SetupAction extends _$SetupAction {
         authorizationNotifier.value = TunAuthorizationState.authorized;
         return true;
       case AuthorizeCode.error:
+      case AuthorizeCode.corePermissionFailed:
         authorizationNotifier.value = TunAuthorizationState.none;
         ref
             .read(patchClashConfigProvider.notifier)
             .update((state) => state.copyWith.tun(enable: false));
         dialogs.showBanner(
-          currentAppLocalizations.tunAuthorizationFailed,
+          code == AuthorizeCode.corePermissionFailed
+              ? currentAppLocalizations.tunCorePermissionFailed
+              : currentAppLocalizations.tunAuthorizationFailed,
           level: BannerLevel.error,
         );
         return true;
@@ -957,9 +965,12 @@ class SetupAction extends _$SetupAction {
   }) {
     return _setupScheduler.run(() async {
       final sourceId = managedIspSourceId(profile?.url ?? '');
-      final plan = sourceId == null
+      final plan = sourceId == null || !managedIspSystemProtection
           ? null
           : await _managedPlan(profile!, sourceId);
+      if (sourceId != null && !managedIspSystemProtection) {
+        await _sharedPlan(profile!, sourceId);
+      }
       await setRunning(false);
       await _core.closeConnections();
       if (managedIspSystemProtection && plan != null) {
@@ -970,6 +981,16 @@ class SetupAction extends _$SetupAction {
         );
       }
       ref.read(currentProfileIdProvider.notifier).value = profile?.id;
+      if (sourceId != null && !managedIspSystemProtection) {
+        ref
+            .read(patchClashConfigProvider.notifier)
+            .update(
+              (state) => state.copyWith(
+                mode: Mode.rule,
+                tun: state.tun.copyWith(enable: true),
+              ),
+            );
+      }
       if (!await preferences.saveConfig(ref.read(configProvider))) {
         throw StateError(currentAppLocalizations.managedIspSaveFailed);
       }
@@ -1010,6 +1031,94 @@ class SetupAction extends _$SetupAction {
     unawaited(check());
   }
 
+  Future<void> saveIspMonitoring(IspMonitorSettings settings) {
+    return _setupScheduler.run(() async {
+      final before = await preferences.ispMonitorSettings();
+      if (!validIspMonitorSeconds(settings.seconds) ||
+          !await preferences.saveIspMonitorSettings(settings)) {
+        throw StateError(currentAppLocalizations.managedIspSaveFailed);
+      }
+      try {
+        if (_managedSelected &&
+            ref.read(isStartProvider) &&
+            !managedIspSystemProtection) {
+          await _core.configureIspMonitor(
+            settings.enabled ? settings.seconds : 0,
+          );
+        }
+      } catch (_) {
+        await preferences.saveIspMonitorSettings(before);
+        rethrow;
+      }
+    });
+  }
+
+  void _watchSharedIsp(Profile profile) {
+    _managedIspTicker?.cancel();
+    Timer? timer;
+    bool current() =>
+        ref.mounted &&
+        timer == _managedIspTicker &&
+        ref.read(currentProfileIdProvider) == profile.id &&
+        ref.read(isStartProvider);
+    var handledSwitch = 0;
+
+    Future<void> readStatus() async {
+      if (!current() || _checkingManagedIsp) return;
+      _checkingManagedIsp = true;
+      try {
+        final status = await _core.getIspStatus();
+        final health = status['isp_health'];
+        if (!current() || health is! Map) return;
+        final state = health['state'];
+        if (state is! String) return;
+        final previous = managedIspMonitorState.value;
+        managedIspMonitorState.value = (profileId: profile.id, state: state);
+        if (health['ip'] case final String ip when ip.isNotEmpty) {
+          managedIspExit.value = (profileId: profile.id, ip: ip);
+        } else if (state == 'down') {
+          managedIspExit.value = (profileId: profile.id, ip: null);
+          if (previous?.profileId != profile.id || previous?.state != 'down') {
+            dialogs.showBanner(
+              currentAppLocalizations.ispMonitorDown,
+              level: BannerLevel.error,
+            );
+          }
+        }
+        if (health['switch'] case {
+          'id': final int id,
+          'from': final String from,
+          'to': final String to,
+        } when id > handledSwitch) {
+          handledSwitch = id;
+          if (health['ip'] == '') {
+            managedIspExit.value = (profileId: profile.id, ip: null);
+          }
+          final picked = ref
+              .read(currentProfileProvider)
+              ?.selectedMap[sharedIspVpnGroup];
+          if (picked == null || picked.isEmpty || picked == from) {
+            ref
+                .read(profilesActionProvider.notifier)
+                .updateCurrentSelectedMap(sharedIspVpnGroup, to);
+          }
+          unawaited(ref.read(proxiesActionProvider.notifier).updateGroups());
+        }
+      } catch (_) {
+        // A stopped or replaced Core has no current monitoring state.
+      } finally {
+        _checkingManagedIsp = false;
+      }
+    }
+
+    timer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => unawaited(readStatus()),
+    );
+    _managedIspTicker = timer;
+    unawaited(readStatus());
+  }
+
   Future<_SetupTaskResult> _setupManaged(
     Profile profile,
     int sourceId, {
@@ -1019,6 +1128,15 @@ class SetupAction extends _$SetupAction {
   }) async {
     if (!system.isMacOS || ref.read(safeModeProvider)) {
       return _SetupTaskResult.failed;
+    }
+    if (!managedIspSystemProtection) {
+      return _setupShared(
+        profile,
+        sourceId,
+        force: force,
+        preloadInvoke: preloadInvoke,
+        onUpdated: onUpdated,
+      );
     }
     if (managedIspSystemProtection) {
       if (!await _protection.available ||
@@ -1087,6 +1205,115 @@ class SetupAction extends _$SetupAction {
             : currentAppLocalizations.managedIspLocalFailed,
       );
     }
+  }
+
+  Future<_SetupTaskResult> _setupShared(
+    Profile profile,
+    int sourceId, {
+    required bool force,
+    Future<void> Function()? preloadInvoke,
+    FutureOr Function()? onUpdated,
+  }) async {
+    final tun = ref.read(patchClashConfigProvider).tun.enable;
+    if (!await requestAdmin(tun)) {
+      return _SetupTaskResult.handoffToCoreRestart;
+    }
+    if (tun &&
+        ref.read(authorizedTunEnableProvider) !=
+            TunAuthorizationState.authorized) {
+      return _SetupTaskResult.failed;
+    }
+    final (:plan, :expectedIp) = await _sharedPlan(profile, sourceId);
+    if (profile.id != ref.read(currentProfileIdProvider)) {
+      return _SetupTaskResult.failed;
+    }
+    final selected = ref
+        .read(profilesProvider)
+        .getProfile(profile.id)
+        ?.selectedMap;
+    final digest = plan.md5;
+    var tunStartFailed = false;
+    try {
+      if (force || globalState.lastConfigMd5 != digest) {
+        final path = await appPath.configFilePath;
+        await _protection.writePrivate(path, plan.yaml);
+        globalState.lastConfigMd5 = null;
+        globalState.lastConfigCounts = null;
+        _appliedInputs = null;
+        await appPath.ensureProviderDirs(sourceId);
+        await _core.setupConfig(
+          params: _setupParams.copyWith(
+            selectedMap: {
+              ...?ref.read(profilesProvider).getProfile(sourceId)?.selectedMap,
+              ...?selected,
+            },
+          ),
+        );
+        globalState.lastConfigMd5 = digest;
+        globalState.lastConfigCounts = plan.counts;
+      }
+      final settings = await preferences.ispMonitorSettings();
+      await _core.configureIspMonitor(
+        settings.enabled ? settings.seconds : 0,
+        expectedIp: expectedIp,
+      );
+      await preloadInvoke?.call();
+      if (ref.read(isStartProvider) && !ref.read(suspendProvider)) {
+        tunStartFailed =
+            tun && (await _core.getIspStatus())['tun_running'] != true;
+        if (!tunStartFailed) {
+          _watchSharedIsp(profile);
+        }
+      }
+      if (!tunStartFailed) {
+        await onUpdated?.call();
+        return _SetupTaskResult.completed;
+      }
+    } catch (_) {
+      tunStartFailed = false;
+    }
+    globalState.lastConfigMd5 = null;
+    await globalState.safeRun(() => setRunning(false));
+    throw StateError(
+      tunStartFailed
+          ? currentAppLocalizations.tunStartFailed
+          : currentAppLocalizations.managedIspLocalFailed,
+    );
+  }
+
+  Future<({BuiltProfile plan, String expectedIp})> _sharedPlan(
+    Profile profile,
+    int sourceId,
+  ) async {
+    final source = ref.read(profilesProvider).getProfile(sourceId);
+    final storage = await _protection.load(profile.id);
+    if (source == null || source.type != ProfileType.url || storage == null) {
+      throw StateError(currentAppLocalizations.managedIspSaveFailed);
+    }
+    final patch = _effectivePatchConfig(ref.read(patchClashConfigProvider));
+    if ([
+      patch.port,
+      patch.mixedPort,
+      patch.socksPort,
+      patch.redirPort,
+      patch.tproxyPort,
+    ].contains(managedIspLocalPort)) {
+      throw StateError(currentAppLocalizations.managedIspLocalFailed);
+    }
+    final state = await ref.read(setupStateProvider(sourceId).future);
+    final apps = await preferences.managedIspApplications(profile.id);
+    final priorityRules = [
+      for (final app in apps)
+        if (app.enabled) ...app.rules,
+    ];
+    final input = ManagedIspProfile.fromStorage(Uri.parse(source.url), storage);
+    final plan = await getProfile(
+      setupState: state,
+      patchConfig: patch.copyWith(mode: Mode.rule),
+      sharedIsp: input,
+      priorityRules: priorityRules,
+    );
+    return (plan: plan, expectedIp: input.expectedIp ?? '');
   }
 
   Future<({Map<String, Object> config, List<String> endpoints})> _managedPlan(

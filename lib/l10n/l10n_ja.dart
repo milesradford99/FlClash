@@ -1850,6 +1850,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tunAuthorizationFailed => 'TUN の権限を取得できなかったため、オフにしました。';
 
   @override
+  String get tunCorePermissionFailed =>
+      'macOS が Core の権限を設定できませんでした。「書類」や「ダウンロード」から開いた場合は FlClash ISP を「アプリケーション」に移動して再試行してください。';
+
+  @override
+  String get tunStartFailed =>
+      'Core が TUN を起動できませんでした。他の VPN アプリの TUN をオフにして、もう一度お試しください。問題が続く場合はログを確認してください。';
+
+  @override
   String get sudoPasswordTitle => 'sudo のパスワードを入力';
 
   @override
@@ -3797,7 +3805,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get managedIspConnection => 'SOCKS5 接続 URL';
 
   @override
-  String get managedIspLocalMode => 'VPN → ISP（ローカルプロキシ）';
+  String get managedIspLocalMode => 'TUN + Chrome 固定 ISP';
+
+  @override
+  String get managedIspSharedNode => '共有 VPN ノード';
 
   @override
   String get managedIspLocalFailed =>
@@ -3832,7 +3843,62 @@ class AppLocalizationsJa extends AppLocalizations {
   String get ispDiagOpenIspChrome => '固定 ISP で Chrome を開く';
 
   @override
-  String get ispDiagChromeIsolation => '初回起動時に専用の Chrome 環境を作成し、次回も再利用します。';
+  String get ispDiagNewChromeSpace => 'スペースを作成';
+
+  @override
+  String get ispAppsTitle => '指定アプリ';
+
+  @override
+  String get ispMonitorSettings => '接続チェック設定';
+
+  @override
+  String get ispMonitorPeriodic => '現在の接続を定期的にチェック';
+
+  @override
+  String get ispMonitorInterval => 'チェック間隔（秒）';
+
+  @override
+  String get ispMonitorHint => 'ISP の通信がある間に定期チェックします。接続に失敗すると予備ノードをチェックします。';
+
+  @override
+  String get ispMonitorChecking => 'ISP 接続をチェック中';
+
+  @override
+  String get ispMonitorDown => '固定 ISP を利用できません。再試行まで待機中です。';
+
+  @override
+  String get ispMonitorInvalidInterval => '1〜86400 秒の間隔を入力してください。';
+
+  @override
+  String get ispAppsAdd => 'アプリを追加';
+
+  @override
+  String get ispAppsStart => '固定 ISP を開始';
+
+  @override
+  String get ispAppsWaiting => 'アプリの接続を待機中';
+
+  @override
+  String get ispAppsMatched => '固定 ISP を使用中';
+
+  @override
+  String get ispAppsNeedsTun => 'TUN の起動を待機中';
+
+  @override
+  String get ispAppsHint => 'ルールは新しい接続に適用されます。外部プログラムは別途追加してください。';
+
+  @override
+  String get ispAppsFailed => '指定アプリを更新できませんでした。アプリまたは実行ファイルを選ぶか、再試行してください。';
+
+  @override
+  String get ispDiagOpenChromeSpace => '開く';
+
+  @override
+  String get ispDiagDuplicateChromeSpace => '同じ名前のスペースがあります。';
+
+  @override
+  String get ispDiagChromeIsolation =>
+      'スペースごとにタブ、ログイン状態、Cookie を保存し、現在の固定 ISP を使用します。';
 
   @override
   String get ispDiagChromeAvailable => 'インストール済み';

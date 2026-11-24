@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'application.dart';
+
 const managedIspTun = 'utun223';
 const managedIspLocalPort = 17890;
 const managedIspLocalAddress = '127.0.0.1:$managedIspLocalPort';
@@ -63,8 +65,21 @@ class ManagedIspPlatform {
         'directory': ?directory,
       });
 
-  Future<void> openIspChrome() =>
-      _channel.invokeMethod<void>('openIspChrome', managedIspLocalPort);
+  Future<void> openIspChrome(String id) =>
+      _channel.invokeMethod<void>('openIspChrome', id);
+
+  Future<ManagedIspApplication?> pickIspApplication() async {
+    final data = await _channel.invokeMapMethod<String, dynamic>(
+      'pickIspApplication',
+    );
+    return data == null ? null : ManagedIspApplication.fromJson(data);
+  }
+
+  Future<void> saveIspChromeSpace({String? id, required String name}) =>
+      _channel.invokeMethod<void>('saveIspChromeSpace', {
+        'id': ?id,
+        'name': name,
+      });
 
   Future<void> openBrowserProbe(String html, String directory) =>
       _channel.invokeMethod<void>('openBrowserProbe', {

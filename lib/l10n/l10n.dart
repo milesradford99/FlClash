@@ -3582,6 +3582,18 @@ abstract class AppLocalizations {
   /// **'TUN could not be authorized, so it was turned off.'**
   String get tunAuthorizationFailed;
 
+  /// No description provided for @tunCorePermissionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'macOS couldn’t set Core permissions. If you opened FlClash ISP from Documents or Downloads, move the app to Applications and try again.'**
+  String get tunCorePermissionFailed;
+
+  /// No description provided for @tunStartFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The Core couldn’t start TUN. Turn off TUN in any other VPN app and try again. Check Logs if the problem persists.'**
+  String get tunStartFailed;
+
   /// No description provided for @sudoPasswordTitle.
   ///
   /// In en, this message translates to:
@@ -6981,8 +6993,14 @@ abstract class AppLocalizations {
   /// No description provided for @managedIspLocalMode.
   ///
   /// In en, this message translates to:
-  /// **'VPN → ISP (local proxy)'**
+  /// **'TUN + fixed ISP for Chrome'**
   String get managedIspLocalMode;
+
+  /// No description provided for @managedIspSharedNode.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared VPN node'**
+  String get managedIspSharedNode;
 
   /// No description provided for @managedIspLocalFailed.
   ///
@@ -7044,10 +7062,118 @@ abstract class AppLocalizations {
   /// **'Open Chrome with fixed ISP'**
   String get ispDiagOpenIspChrome;
 
+  /// No description provided for @ispDiagNewChromeSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'New space'**
+  String get ispDiagNewChromeSpace;
+
+  /// No description provided for @ispAppsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected apps'**
+  String get ispAppsTitle;
+
+  /// No description provided for @ispMonitorSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Link check settings'**
+  String get ispMonitorSettings;
+
+  /// No description provided for @ispMonitorPeriodic.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the current link periodically'**
+  String get ispMonitorPeriodic;
+
+  /// No description provided for @ispMonitorInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Check interval (seconds)'**
+  String get ispMonitorInterval;
+
+  /// No description provided for @ispMonitorHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Periodic checks run when ISP traffic is active. Connection failures trigger on-demand checks of backup nodes.'**
+  String get ispMonitorHint;
+
+  /// No description provided for @ispMonitorChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking the ISP link'**
+  String get ispMonitorChecking;
+
+  /// No description provided for @ispMonitorDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed ISP unavailable. Waiting before retrying.'**
+  String get ispMonitorDown;
+
+  /// No description provided for @ispMonitorInvalidInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an interval from 1 to 86400 seconds.'**
+  String get ispMonitorInvalidInterval;
+
+  /// No description provided for @ispAppsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add app'**
+  String get ispAppsAdd;
+
+  /// No description provided for @ispAppsStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start fixed ISP'**
+  String get ispAppsStart;
+
+  /// No description provided for @ispAppsWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for a connection'**
+  String get ispAppsWaiting;
+
+  /// No description provided for @ispAppsMatched.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed ISP in use'**
+  String get ispAppsMatched;
+
+  /// No description provided for @ispAppsNeedsTun.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for TUN'**
+  String get ispAppsNeedsTun;
+
+  /// No description provided for @ispAppsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules apply to new connections. Add external programs separately.'**
+  String get ispAppsHint;
+
+  /// No description provided for @ispAppsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update selected apps. Choose an app or executable, or try again.'**
+  String get ispAppsFailed;
+
+  /// No description provided for @ispDiagOpenChromeSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get ispDiagOpenChromeSpace;
+
+  /// No description provided for @ispDiagDuplicateChromeSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'A space already has this name.'**
+  String get ispDiagDuplicateChromeSpace;
+
   /// No description provided for @ispDiagChromeIsolation.
   ///
   /// In en, this message translates to:
-  /// **'The first launch creates a separate Chrome workspace that is reused next time.'**
+  /// **'Spaces keep separate tabs, sign-ins and cookies and use the current fixed ISP.'**
   String get ispDiagChromeIsolation;
 
   /// No description provided for @ispDiagChromeAvailable.

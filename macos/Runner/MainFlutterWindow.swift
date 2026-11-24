@@ -12,6 +12,19 @@ class MainFlutterWindow: NSWindow {
         
         RegisterGeneratedPlugins(registry: flutterViewController)
         let registrar = flutterViewController.registrar(forPlugin: "ManagedNetworkProtection")
+        let tunChannel = FlutterMethodChannel(
+            name: "flclash/macos_tun", binaryMessenger: registrar.messenger
+        )
+        tunChannel.setMethodCallHandler { call, reply in
+            guard call.method == "authorizeCore" else {
+                reply(FlutterMethodNotImplemented)
+                return
+            }
+            DispatchQueue.global(qos: .userInitiated).async {
+                let outcome = MacOSTunAuthorization.authorizeCore()
+                DispatchQueue.main.async { reply(outcome) }
+            }
+        }
         let channel = FlutterMethodChannel(
             name: "flclash/managed_isp", binaryMessenger: registrar.messenger
         )
@@ -27,6 +40,8 @@ class MainFlutterWindow: NSWindow {
                             reply(protection.tunReady)
                         case "environment":
                             reply(await protection.environment())
+                        case "pickIspApplication":
+                            reply(try await protection.pickIspApplication())
                         case "environmentShortcut":
                             guard let args = call.arguments as? [String: String],
                                   let kind = args["kind"] else {
@@ -36,11 +51,19 @@ class MainFlutterWindow: NSWindow {
                             try protection.openEnvironmentShortcut(kind, directory: args["directory"])
                             reply(nil)
                         case "openIspChrome":
-                            guard let port = call.arguments as? Int else {
-                                reply(FlutterError(code: "invalidPort", message: nil, details: nil))
+                            guard let id = call.arguments as? String else {
+                                reply(FlutterError(code: "invalidChromeSpace", message: nil, details: nil))
                                 return
                             }
-                            try protection.openIspChrome(port)
+                            try protection.openIspChrome(id)
+                            reply(nil)
+                        case "saveIspChromeSpace":
+                            guard let args = call.arguments as? [String: String],
+                                  let name = args["name"] else {
+                                reply(FlutterError(code: "invalidChromeSpace", message: nil, details: nil))
+                                return
+                            }
+                            try protection.saveIspChromeSpace(id: args["id"], name: name)
                             reply(nil)
                         case "openBrowserProbe":
                             guard let args = call.arguments as? [String: String],
@@ -92,6 +115,8 @@ class MainFlutterWindow: NSWindow {
                         default:
                             reply(FlutterMethodNotImplemented)
                         }
+                    } catch IspChromeSpaces.SpaceError.duplicate {
+                        reply(FlutterError(code: "duplicateChromeSpace", message: nil, details: nil))
                     } catch {
                         reply(FlutterError(
                             code: "managedIspError",

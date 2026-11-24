@@ -47,12 +47,14 @@ final class ManagedNetworkProtection: NSObject, OSSystemExtensionRequestDelegate
         let templates = "DnsOverHttpsTemplates" as CFString
         let installed = chromeURL != nil
         let resolvers = await Task.detached { Self.resolverCounts() }.value
+        let spaces = installed ? (try? Self.ispChromeSpaces?.list().map(\.values)) : nil
         return [
             "locale": Locale.current.identifier,
             "languages": Locale.preferredLanguages,
             "timeZone": TimeZone.current.identifier,
             "chromeInstalled": installed,
             "chromeProfiles": installed ? Self.chromeProfiles() : [],
+            "ispChromeSpaces": spaces as Any? ?? NSNull(),
             "webRtcForced": CFPreferencesAppValueIsForced(webRtc, chrome),
             "webRtcValue": CFPreferencesCopyAppValue(webRtc, chrome) as? String ?? "",
             "dohMode": CFPreferencesCopyAppValue(doh, chrome) as? String ?? "",
@@ -68,19 +70,40 @@ final class ManagedNetworkProtection: NSObject, OSSystemExtensionRequestDelegate
         NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.google.Chrome")
     }
 
-    private static let ispChromeID = "flclash-isp-chrome"
+    func pickIspApplication() async throws -> [String: Any]? {
+        let panel = NSOpenPanel()
+        panel.directoryURL = URL(fileURLWithPath: "/Applications", isDirectory: true)
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.treatsFilePackagesAsDirectories = false
+        let response = await withCheckedContinuation { continuation in
+            panel.begin { continuation.resume(returning: $0) }
+        }
+        guard response == .OK, let selection = panel.url else { return nil }
+        let url = selection.resolvingSymlinksInPath().standardizedFileURL
+        let bundle = url.pathExtension.lowercased() == "app"
+        if bundle {
+            guard let executable = Bundle(url: url)?.executableURL,
+                  FileManager.default.isExecutableFile(atPath: executable.path) else {
+                throw ProtectionError.unavailable
+            }
+        } else {
+            guard try url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true,
+                  FileManager.default.isExecutableFile(atPath: url.path) else {
+                throw ProtectionError.unavailable
+            }
+        }
+        return ["name": FileManager.default.displayName(atPath: selection.path),
+                "path": url.path, "bundle": bundle]
+    }
 
-    private static var ispChromeData: URL? {
+    private static var ispChromeSpaces: IspChromeSpaces? {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-            .first?.appendingPathComponent(Bundle.main.bundleIdentifier ?? "flclash")
-            .appendingPathComponent("Chrome ISP")
+            .first.map { IspChromeSpaces(support: $0.appendingPathComponent(Bundle.main.bundleIdentifier ?? "flclash")) }
     }
 
     private static func chromeProfiles() -> [[String: String]] {
-        var result = [[String: String]]()
-        if let data = ispChromeData, FileManager.default.fileExists(atPath: data.path) {
-            result.append(["id": ispChromeID, "name": "Chrome ISP"])
-        }
+        let result = (try? ispChromeSpaces?.list().map(\.values)) ?? []
         let state = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support/Google/Chrome/Local State")
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: state.path),
@@ -159,25 +182,24 @@ final class ManagedNetworkProtection: NSObject, OSSystemExtensionRequestDelegate
         try openChrome(file.absoluteString, directory: directory)
     }
 
-    func openIspChrome(_ port: Int) throws {
-        guard (1...65535).contains(port) else { throw ProtectionError.unavailable }
-        try openChrome("about:blank", directory: Self.ispChromeID, ispPort: port)
+    func saveIspChromeSpace(id: String?, name: String) throws {
+        guard let spaces = Self.ispChromeSpaces else { throw ProtectionError.unavailable }
+        _ = try spaces.save(id: id, name: name)
     }
 
-    private func openChrome(_ target: String, directory: String?, ispPort: Int? = nil) throws {
+    func openIspChrome(_ id: String) throws {
+        try openChrome("about:blank", directory: id, requiresIsp: true)
+    }
+
+    private func openChrome(_ target: String, directory: String?, requiresIsp: Bool = false) throws {
         guard let app = chromeURL, let executable = Bundle(url: app)?.executableURL else {
             throw ProtectionError.unavailable
         }
         var arguments: [String] = []
-        if directory == Self.ispChromeID {
-            guard let data = Self.ispChromeData else { throw ProtectionError.unavailable }
-            arguments = [
-                "--user-data-dir=" + data.path,
-                "--profile-directory=Default",
-                "--no-first-run",
-                "--proxy-server=socks5://127.0.0.1:" + String(ispPort ?? 17890),
-                "--force-webrtc-ip-handling-policy=disable_non_proxied_udp",
-            ]
+        if let directory, let ispArguments = try Self.ispChromeSpaces?.launchArguments(for: directory) {
+            arguments = ispArguments
+        } else if requiresIsp {
+            throw ProtectionError.unavailable
         } else if let directory {
             guard Self.validChromeDirectory(directory),
                   Self.chromeProfiles().contains(where: { $0["id"] == directory })

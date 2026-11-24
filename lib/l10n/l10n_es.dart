@@ -1960,6 +1960,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pudo autorizar TUN, por lo que se desactivó.';
 
   @override
+  String get tunCorePermissionFailed =>
+      'macOS no pudo configurar los permisos del Core. Si abriste FlClash ISP desde Documentos o Descargas, mueve la app a Aplicaciones y vuelve a intentarlo.';
+
+  @override
+  String get tunStartFailed =>
+      'El Core no pudo iniciar TUN. Desactiva TUN en las demás apps de VPN y vuelve a intentarlo. Si el problema persiste, consulta los registros.';
+
+  @override
   String get sudoPasswordTitle => 'Introduce tu contraseña para sudo';
 
   @override
@@ -4019,7 +4027,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get managedIspConnection => 'URL de conexión SOCKS5';
 
   @override
-  String get managedIspLocalMode => 'VPN → ISP (proxy local)';
+  String get managedIspLocalMode => 'TUN + ISP fijo para Chrome';
+
+  @override
+  String get managedIspSharedNode => 'Nodo VPN compartido';
 
   @override
   String get managedIspLocalFailed =>
@@ -4059,8 +4070,67 @@ class AppLocalizationsEs extends AppLocalizations {
   String get ispDiagOpenIspChrome => 'Abrir Chrome con ISP fijo';
 
   @override
+  String get ispDiagNewChromeSpace => 'Nuevo espacio';
+
+  @override
+  String get ispAppsTitle => 'Apps seleccionadas';
+
+  @override
+  String get ispMonitorSettings => 'Ajustes de comprobación de enlace';
+
+  @override
+  String get ispMonitorPeriodic => 'Comprobar el enlace actual periódicamente';
+
+  @override
+  String get ispMonitorInterval => 'Intervalo de comprobación (segundos)';
+
+  @override
+  String get ispMonitorHint =>
+      'Las comprobaciones periódicas se hacen cuando hay tráfico ISP. Si falla la conexión, se comprueban nodos de respaldo.';
+
+  @override
+  String get ispMonitorChecking => 'Comprobando el enlace ISP';
+
+  @override
+  String get ispMonitorDown =>
+      'El ISP fijo no está disponible. Esperando para reintentar.';
+
+  @override
+  String get ispMonitorInvalidInterval =>
+      'Introduce un intervalo entre 1 y 86400 segundos.';
+
+  @override
+  String get ispAppsAdd => 'Añadir app';
+
+  @override
+  String get ispAppsStart => 'Iniciar ISP fijo';
+
+  @override
+  String get ispAppsWaiting => 'Esperando una conexión';
+
+  @override
+  String get ispAppsMatched => 'Usa el ISP fijo';
+
+  @override
+  String get ispAppsNeedsTun => 'Esperando TUN';
+
+  @override
+  String get ispAppsHint =>
+      'Las reglas se aplican a conexiones nuevas. Añade los programas externos por separado.';
+
+  @override
+  String get ispAppsFailed =>
+      'No se pudieron actualizar las apps. Selecciona una app o un ejecutable, o vuelve a intentarlo.';
+
+  @override
+  String get ispDiagOpenChromeSpace => 'Abrir';
+
+  @override
+  String get ispDiagDuplicateChromeSpace => 'Ya hay un espacio con ese nombre.';
+
+  @override
   String get ispDiagChromeIsolation =>
-      'El primer inicio crea un espacio de Chrome independiente que se reutiliza después.';
+      'Cada espacio guarda sus pestañas, sesiones y cookies por separado y usa el ISP fijo actual.';
 
   @override
   String get ispDiagChromeAvailable => 'Instalado';

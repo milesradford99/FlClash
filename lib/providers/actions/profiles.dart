@@ -13,6 +13,48 @@ class ProfilesAction extends _$ProfilesAction {
   bool _isManagedRunning(int id) =>
       ref.read(isStartProvider) && ref.read(currentProfileIdProvider) == id;
 
+  Future<void> changeManagedIspApplication(
+    int id,
+    ManagedIspApplication app, {
+    bool remove = false,
+  }) {
+    return _managedWork.run(() async {
+      final profile = ref.read(profilesProvider).getProfile(id);
+      if (managedIspSystemProtection ||
+          ref.read(safeModeProvider) ||
+          managedIspSourceId(profile?.url ?? '') == null) {
+        throw StateError(currentAppLocalizations.managedIspUnavailable);
+      }
+      final before = await preferences.managedIspApplications(id);
+      final index = before.indexWhere(
+        (entry) => entry.path.toLowerCase() == app.path.toLowerCase(),
+      );
+      if (remove && index < 0) return;
+      final after = [...before];
+      if (remove) {
+        after.removeAt(index);
+      } else if (index < 0) {
+        after.add(app);
+      } else {
+        after[index] = app;
+      }
+      if (!await preferences.saveManagedIspApplications(id, after)) {
+        throw StateError(currentAppLocalizations.managedIspSaveFailed);
+      }
+      if (!_isManagedRunning(id)) return;
+      final setup = ref.read(setupActionProvider.notifier);
+      try {
+        if (!await setup.applyProfile(silence: true)) {
+          throw StateError(currentAppLocalizations.managedIspLocalFailed);
+        }
+      } catch (_) {
+        await preferences.saveManagedIspApplications(id, before);
+        if (_isManagedRunning(id)) await setup.applyProfile(silence: true);
+        rethrow;
+      }
+    });
+  }
+
   Future<int> createManagedIsp(ManagedIspProfile input) {
     return _managedWork.run(() async {
       if (!system.isMacOS || ref.read(safeModeProvider)) {
@@ -54,14 +96,10 @@ class ProfilesAction extends _$ProfilesAction {
       var stored = false;
       try {
         final raw = await _core.readConfig(staged.id);
-        final pins = await input.resolve(raw);
-        input.protectedConfig(
-          raw,
-          pins,
-          tun: managedIspTun,
-          mixedPort: managedIspLocalPort,
-          enableTun: managedIspSystemProtection,
-        );
+        final pins = managedIspSystemProtection
+            ? await input.resolve(raw)
+            : const <String, List<String>>{};
+        _validateManagedSource(input, raw, pins);
         final marker = await managed.file;
         await marker.writeAsStringAtomically('rules: [ "MATCH,REJECT" ]\n');
         final digest = await fileSha256(sourceFile.path);
@@ -111,6 +149,24 @@ class ProfilesAction extends _$ProfilesAction {
         await sourceFile.safeDelete();
       }
     });
+  }
+
+  void _validateManagedSource(
+    ManagedIspProfile input,
+    Map<String, dynamic> raw,
+    Map<String, List<String>> pins,
+  ) {
+    if (managedIspSystemProtection) {
+      input.protectedConfig(
+        raw,
+        pins,
+        tun: managedIspTun,
+        mixedPort: managedIspLocalPort,
+        enableTun: true,
+      );
+    } else {
+      input.sharedConfig(raw, port: managedIspLocalPort);
+    }
   }
 
   Future<Profile> _downloadManagedSource(
@@ -224,6 +280,10 @@ class ProfilesAction extends _$ProfilesAction {
             await _protection.protectedProfile != profile.id) {
       throw StateError('The fixed ISP profile is not running.');
     }
+    if (!managedIspSystemProtection &&
+        (await _core.getIspStatus())['chrome_isp'] != true) {
+      throw StateError('The Chrome ISP listener is not available.');
+    }
     final (bytes, _) = await _readManagedEndpoint(
       Uri.parse(managedIspHealthCheck),
       protected: true,
@@ -315,9 +375,7 @@ class ProfilesAction extends _$ProfilesAction {
       if (active != null && active != managed.id) {
         throw StateError('Another fixed ISP profile is protected.');
       }
-      final viaIsp =
-          active != null ||
-          !managedIspSystemProtection && _isManagedRunning(managed.id);
+      final viaIsp = active != null;
       final rawStorage = await _protection.load(managed.id);
       if (rawStorage == null) {
         throw StateError('Fixed ISP credentials are missing.');
@@ -332,18 +390,14 @@ class ProfilesAction extends _$ProfilesAction {
         final raw = await _core.readConfig(staged.id);
         final sourceDigest = await fileSha256((await source.file).path);
         final previous = _managedIspAddresses(rawStorage, sourceDigest);
-        final pins = await input.resolve(
-          raw,
-          previous: previous,
-          resolver: viaIsp ? _resolveThroughManagedIsp : null,
-        );
-        input.protectedConfig(
-          raw,
-          pins,
-          tun: managedIspTun,
-          mixedPort: managedIspLocalPort,
-          enableTun: managedIspSystemProtection,
-        );
+        final pins = managedIspSystemProtection
+            ? await input.resolve(
+                raw,
+                previous: previous,
+                resolver: viaIsp ? _resolveThroughManagedIsp : null,
+              )
+            : const <String, List<String>>{};
+        _validateManagedSource(input, raw, pins);
         final latest = ref.read(profilesProvider).getProfile(source.id);
         if (latest == null ||
             latest.url != source.url ||

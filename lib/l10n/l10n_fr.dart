@@ -1959,6 +1959,14 @@ class AppLocalizationsFr extends AppLocalizations {
       'TUN n’a pas pu être autorisé et a donc été désactivé.';
 
   @override
+  String get tunCorePermissionFailed =>
+      'macOS n’a pas pu configurer les autorisations du Core. Si vous avez ouvert FlClash ISP depuis Documents ou Téléchargements, déplacez l’app dans Applications, puis réessayez.';
+
+  @override
+  String get tunStartFailed =>
+      'Le Core n’a pas pu démarrer TUN. Désactivez TUN dans les autres apps VPN et réessayez. Si le problème persiste, consultez les journaux.';
+
+  @override
   String get sudoPasswordTitle => 'Saisissez votre mot de passe pour sudo';
 
   @override
@@ -4024,7 +4032,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get managedIspConnection => 'URL de connexion SOCKS5';
 
   @override
-  String get managedIspLocalMode => 'VPN → ISP (proxy local)';
+  String get managedIspLocalMode => 'TUN + ISP fixe pour Chrome';
+
+  @override
+  String get managedIspSharedNode => 'Nœud VPN partagé';
 
   @override
   String get managedIspLocalFailed =>
@@ -4064,8 +4075,67 @@ class AppLocalizationsFr extends AppLocalizations {
   String get ispDiagOpenIspChrome => 'Ouvrir Chrome avec l’ISP fixe';
 
   @override
+  String get ispDiagNewChromeSpace => 'Nouvel espace';
+
+  @override
+  String get ispAppsTitle => 'Apps sélectionnées';
+
+  @override
+  String get ispMonitorSettings => 'Réglages de vérification du lien';
+
+  @override
+  String get ispMonitorPeriodic => 'Vérifier périodiquement le lien en cours';
+
+  @override
+  String get ispMonitorInterval => 'Intervalle de vérification (secondes)';
+
+  @override
+  String get ispMonitorHint =>
+      'La vérification périodique a lieu quand le FAI est utilisé. Un échec de connexion déclenche la vérification des nœuds de secours.';
+
+  @override
+  String get ispMonitorChecking => 'Vérification du lien FAI';
+
+  @override
+  String get ispMonitorDown =>
+      'Le FAI fixe est indisponible. En attente avant une nouvelle tentative.';
+
+  @override
+  String get ispMonitorInvalidInterval =>
+      'Saisissez un intervalle entre 1 et 86400 secondes.';
+
+  @override
+  String get ispAppsAdd => 'Ajouter une app';
+
+  @override
+  String get ispAppsStart => 'Démarrer le FAI fixe';
+
+  @override
+  String get ispAppsWaiting => 'En attente d’une connexion';
+
+  @override
+  String get ispAppsMatched => 'FAI fixe utilisé';
+
+  @override
+  String get ispAppsNeedsTun => 'En attente de TUN';
+
+  @override
+  String get ispAppsHint =>
+      'Les règles s’appliquent aux nouvelles connexions. Ajoutez les programmes externes séparément.';
+
+  @override
+  String get ispAppsFailed =>
+      'Impossible de mettre à jour les apps. Sélectionnez une app ou un exécutable, ou réessayez.';
+
+  @override
+  String get ispDiagOpenChromeSpace => 'Ouvrir';
+
+  @override
+  String get ispDiagDuplicateChromeSpace => 'Un espace porte déjà ce nom.';
+
+  @override
   String get ispDiagChromeIsolation =>
-      'Le premier lancement crée un espace Chrome distinct, réutilisé ensuite.';
+      'Chaque espace conserve ses onglets, connexions et cookies et utilise le FAI fixe actuel.';
 
   @override
   String get ispDiagChromeAvailable => 'Installé';
