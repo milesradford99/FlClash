@@ -2,9 +2,9 @@
 
 <img src="assets/images/icon.png" alt="FlClash" width="88">
 
-# FlClash
+# FlClash ISP
 
-基于 ClashMeta 的多平台代理客户端，简单易用，开源无广告。
+基于 [FlClash](https://github.com/chen08209/FlClash) 的 fork，新增 macOS 固定 ISP 分流。
 
 [English](README.md) · **简体中文**
 
@@ -13,7 +13,7 @@
 [![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
 [![Telegram](https://img.shields.io/badge/Telegram-channel-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/FlClash)
 
-[官网](https://chen08209.github.io/FlClash/zh) · [下载](#下载) · [更新日志](CHANGELOG.md) · [从源码构建](#从源码构建)
+[macOS 固定 ISP 指南](macos/NetworkProtection/README.md) · [同步上游](UPSTREAM_SYNC.md) · [上游版下载](#上游版下载) · [从源码构建](#从源码构建)
 
 </div>
 
@@ -24,7 +24,17 @@
   </picture>
 </p>
 
-> 此 fork 的 macOS 固定 ISP 版本提供关联 profile、订阅刷新和系统网络过滤。独立测试机的签名构建及验收见 [FlClash ISP 构建与验收](macos/NetworkProtection/README.md)。
+## macOS 固定 ISP
+
+一个 Mihomo Core 同时运行 TUN 和固定 ISP 分流。普通应用按订阅规则走 VPN、直连或拒绝。由 FlClash ISP 打开的 Chrome 空间和命中的指定应用 TCP 连接走 VPN → SOCKS5 ISP。两条路径共用一个 VPN 节点选项。
+
+1. 先退出原版 FlClash 并停止它的 TUN。打开 `FlClash ISP.app`，进入「配置 → 添加 → 配置 VPN 和固定 ISP」。
+2. 粘贴 HTTPS 订阅和 `socks5://user:password@host:port` 连接串，可选填预期公网出口 IP。
+3. 点「用固定 ISP 打开 Chrome」选择独立浏览空间，或进入「检查 macOS 和 Chrome → 指定应用」添加本机应用。按 macOS 提示完成 TUN 授权。
+
+固定 ISP 链路确认故障后，Core 会分批寻找可经同一个 ISP 出口的 VPN 节点。全部失败时，固定 ISP 连接报错并进入冷却。普通应用继续按订阅分流，自动切换保留已建立的连接。「链路检查设置」里的定时检查默认关闭，开启后的默认间隔是 120 秒，可手动调整。
+
+单 App 签名打包、诊断和验收见 [macOS 固定 ISP 指南](macos/NetworkProtection/README.md)。
 
 ## 功能
 
@@ -37,10 +47,9 @@
 - **平台细节**：Android 上有快捷设置磁贴、分应用代理和 Android TV 支持；桌面端有托盘菜单和全局快捷键。
 - **开源无广告**，以 GPL-3.0 协议发布。
 
-## 下载
+## 上游版下载
 
-从 [GitHub Releases](https://github.com/chen08209/FlClash/releases/latest) 获取最新版本，或打开
-[官网](https://chen08209.github.io/FlClash/zh#download)，它会自动为你的设备选好安装包。
+FlClash ISP 可按 [本机签名与打包](macos/NetworkProtection/README.md#本机签名与打包) 构建单 App。下列下载渠道提供原版 FlClash，包括上游的 [GitHub Releases](https://github.com/chen08209/FlClash/releases/latest) 和 [官网](https://chen08209.github.io/FlClash/zh#download)。
 
 | 平台 | 安装包 | 说明 |
 | --- | --- | --- |
@@ -98,8 +107,9 @@ adb shell am start -a com.follow.clash.action.TOGGLE
 以及通过 rustup 安装的 [Rust](https://rustup.rs/)。桌面端需要在对应系统上构建，Android 在任意系统上都能构建。
 
 ```bash
-git clone --recursive https://github.com/chen08209/FlClash.git
+git clone https://github.com/milesradford99/FlClash.git
 cd FlClash
+git -c url.https://github.com/.insteadOf=git@github.com: submodule update --init --recursive
 flutter pub get
 dart run tool/package.dart android   # 或 windows、macos、linux
 ```
@@ -117,8 +127,8 @@ dart run tool/package.dart android   # 或 windows、macos、linux
 
 ## 支持
 
-给仓库点一个 Star 是支持项目最简单的方式。问题讨论和更新通知请关注 [Telegram 频道](https://t.me/FlClash)，
-Bug 与功能建议请提交到 [GitHub Issues](https://github.com/chen08209/FlClash/issues)。
+固定 ISP 的改动见 [本项目 PR](https://github.com/milesradford99/FlClash/pulls)，维护流程见 [同步上游指南](UPSTREAM_SYNC.md)。
+原版 FlClash 的通知、问题反馈与更新记录见上游的 [Telegram 频道](https://t.me/FlClash)、[GitHub Issues](https://github.com/chen08209/FlClash/issues) 和 [更新日志](CHANGELOG.md)。
 
 <a href="https://star-history.com/#chen08209/FlClash&Date">
   <picture>
