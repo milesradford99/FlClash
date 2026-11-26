@@ -2,9 +2,9 @@
 
 <img src="assets/images/icon.png" alt="FlClash" width="88">
 
-# FlClash
+# FlClash ISP
 
-A multi-platform proxy client based on ClashMeta. Simple to use, open source and ad-free.
+A fork of [FlClash](https://github.com/chen08209/FlClash) with fixed ISP routing on macOS.
 
 **English** · [简体中文](README_zh_CN.md)
 
@@ -13,7 +13,7 @@ A multi-platform proxy client based on ClashMeta. Simple to use, open source and
 [![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
 [![Telegram](https://img.shields.io/badge/Telegram-channel-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/FlClash)
 
-[Website](https://chen08209.github.io/FlClash) · [Download](#download) · [Changelog](CHANGELOG.md) · [Build from source](#build-from-source)
+[macOS ISP guide](macos/NetworkProtection/README.md) · [Fork maintenance](UPSTREAM_SYNC.md) · [Upstream downloads](#upstream-downloads) · [Build from source](#build-from-source)
 
 </div>
 
@@ -23,6 +23,18 @@ A multi-platform proxy client based on ClashMeta. Simple to use, open source and
     <img alt="FlClash dashboard on a MacBook and a phone" src="snapshots/preview.png" width="92%">
   </picture>
 </p>
+
+## Fixed ISP on macOS
+
+One Mihomo Core runs TUN. Regular apps follow the subscription rules. Chrome spaces opened from FlClash ISP and matched TCP connections from selected apps use VPN → SOCKS5 ISP. Both routes share one VPN node selection.
+
+1. Quit upstream FlClash and stop its TUN if it is running. Open `FlClash ISP.app` and choose **Profiles → Add → Set up VPN and fixed ISP**.
+2. Paste an HTTPS subscription link and a `socks5://user:password@host:port` connection string. You can also enter the expected public exit IP.
+3. Use **Open Chrome with fixed ISP** to choose a separate Chrome space, or open **Selected apps** to add a local app. Complete the macOS TUN authorization prompt.
+
+When the ISP fails, new fixed ISP connections can use another healthy VPN node with the same ISP. If all candidates fail, those connections fail without falling back to plain VPN. An automatic switch leaves existing connections open. Scheduled checks are off by default. When enabled, the default interval is 120 seconds and can be changed in **Link check settings**.
+
+See the [macOS guide](macos/NetworkProtection/README.md) for local signing, packaging, diagnostics and acceptance checks.
 
 ## Features
 
@@ -38,10 +50,11 @@ A multi-platform proxy client based on ClashMeta. Simple to use, open source and
   global hotkeys on the desktop.
 - **Open source and ad-free**, licensed under GPL-3.0.
 
-## Download
+## Upstream downloads
 
-Get the latest build from [GitHub Releases](https://github.com/chen08209/FlClash/releases/latest), or open the
-[website](https://chen08209.github.io/FlClash#download), which picks the right file for your device.
+For FlClash ISP, build and sign the single macOS App using the [macOS guide](macos/NetworkProtection/README.md#本机签名与打包).
+The downloads below are for upstream FlClash. See its [GitHub Releases](https://github.com/chen08209/FlClash/releases/latest)
+and [website](https://chen08209.github.io/FlClash#download).
 
 | Platform | Packages | Notes |
 | --- | --- | --- |
@@ -103,8 +116,9 @@ You need [Flutter](https://docs.flutter.dev/get-started/install) 3.50 (release b
 host, except Android, which builds anywhere.
 
 ```bash
-git clone --recursive https://github.com/chen08209/FlClash.git
+git clone https://github.com/milesradford99/FlClash.git
 cd FlClash
+git -c url.https://github.com/.insteadOf=git@github.com: submodule update --init --recursive
 flutter pub get
 dart run tool/package.dart android   # or windows, macos, linux
 ```
@@ -122,9 +136,8 @@ Run `dart run tool/package.dart --help` for the remaining options, such as `--ta
 
 ## Support
 
-Starring the repository is the easiest way to support the project. Questions and announcements go to the
-[Telegram channel](https://t.me/FlClash); bugs and feature requests go to
-[GitHub Issues](https://github.com/chen08209/FlClash/issues).
+Use the [fork pull requests](https://github.com/milesradford99/FlClash/pulls) for ISP changes and the [sync guide](UPSTREAM_SYNC.md) to bring in upstream updates.
+For upstream FlClash, see its [Telegram channel](https://t.me/FlClash), [issues](https://github.com/chen08209/FlClash/issues) and [changelog](CHANGELOG.md).
 
 <a href="https://star-history.com/#chen08209/FlClash&Date">
   <picture>
